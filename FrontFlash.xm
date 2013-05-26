@@ -20,7 +20,6 @@ static NSDictionary *prefDict = nil;
 @property(nonatomic) int videoFlashMode;
 @property(nonatomic) int cameraMode;
 @property(nonatomic) int cameraDevice;
-- (void)setFlashMode:(int)arg1;
 @end
 
 @interface PLCameraController
@@ -52,9 +51,7 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)_setCameraMode:(int)arg1 cameraDevice:(int)arg2
 {
 	%orig;
-	if (arg1 == 1 && arg2 == 1 && FrontFlashOn && self.flashMode == 1) {
-		BUG_FIX_1 = YES;
-	} else BUG_FIX_1 = NO;
+	if (arg1 == 1 && arg2 == 1 && FrontFlashOn && self.flashMode == 1) BUG_FIX_1 = YES;	else BUG_FIX_1 = NO;
 }
 
 %end
@@ -78,14 +75,14 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)_shutterButtonClicked
 {
 	if (frontFlashActive && isFrontCamera && FrontFlashOn) {
-	 	previousBacklightLevel = [UIScreen mainScreen].brightness;
+		previousBacklightLevel = [UIScreen mainScreen].brightness;
 		GSEventSetBacklightLevel(1.0);
 		UIWindow* window = [UIApplication sharedApplication].keyWindow;
    		flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
     	flashView.backgroundColor = [UIColor whiteColor];
     	[window addSubview:flashView];
     	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
-        	%orig;
+    		%orig;
     	});
     } else %orig;
 }
@@ -94,18 +91,16 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 {
     %orig;
     if (flashView != nil && isFrontCamera && FrontFlashOnInPhoto) {
-   		[UIView animateWithDuration:1.2
-                delay:0.0
-                options:0
+   		[UIView animateWithDuration:1.2 delay:0.0 options:0
                 animations:^{
     				flashView.alpha = 0.0f;
-                } 
-                completion:^(BOOL finished){
-                	[flashView removeFromSuperview];
-                	flashView = nil;
-    				[flashView release];
-    				[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
-    				GSEventSetBacklightLevel(previousBacklightLevel);
+                }
+        		completion:^(BOOL finished) {
+					[flashView removeFromSuperview];
+					flashView = nil;
+					[flashView release];
+					[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+					GSEventSetBacklightLevel(previousBacklightLevel);
                 }];
     }
 }
@@ -119,30 +114,27 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 		[flashButton setHidden:YES];
 	}
     if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
-   		[UIView animateWithDuration:1.2
-                delay:0.0
-                options:0
+   		[UIView animateWithDuration:1.2 delay:0.0 options:0
                 animations:^{
     				flashView.alpha = 0.0f;
-                } 
-                completion:^(BOOL finished){
-                	[flashView removeFromSuperview];
-                	flashView = nil;
-    				[flashView release];
-    				[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
-    				GSEventSetBacklightLevel(previousBacklightLevel);
+                }
+        		completion:^(BOOL finished) {
+					[flashView removeFromSuperview];
+					flashView = nil;
+					[flashView release];
+					[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+					GSEventSetBacklightLevel(previousBacklightLevel);
                 }];
     }
 }
 
-// Ability to use Flash button in Front Camera
 - (BOOL)_flashButtonShouldBeHidden { return isFrontCamera && FrontFlashOn ? NO : %orig; }
 
 %end
 
 %ctor {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    prefDict = [[NSDictionary alloc] initWithContentsOfFile:PREF_PATH];
+	prefDict = [[NSDictionary alloc] initWithContentsOfFile:PREF_PATH];
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PreferencesChangedNotification), NULL, CFNotificationSuspensionBehaviorCoalesce);
 	[pool release];
 }
