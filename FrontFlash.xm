@@ -2,7 +2,24 @@
 
 #define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
 #define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"
-#define Bool(dict, key, defaultBoolValue) ([[dict objectForKey:key] boolValue] ?: defaultBoolValue)
+#define Bool(key, defaultBoolValue) ([[prefDict objectForKey:key] boolValue] ?: defaultBoolValue)
+#define Color(key) ([[prefDict objectForKey:key] floatValue] ?: 1.0f)
+
+#define SwitchColor \
+					switch ([[prefDict objectForKey:@"colorProfile"] intValue] ?: 1) { \
+						case 1: \
+							flashView.backgroundColor = [UIColor whiteColor]; \
+							break; \
+						case 2: \
+							flashView.backgroundColor = [UIColor colorWithRed:255/255.0f green:252/255.0f blue:120/255.0f alpha:1.0f]; \
+							break; \
+						case 3: \
+							flashView.backgroundColor = [UIColor colorWithRed:168/255.0f green:239/255.0f blue:255/255.0f alpha:1.0f]; \
+							break; \
+						case 4: \
+							flashView.backgroundColor = [UIColor colorWithRed:Color(@"R") green:Color(@"G") blue:Color(@"B") alpha:1.0f]; \
+							break; \
+					}
 
 #define isFrontCamera ((self.cameraMode == 0 || self.cameraMode == 1) && self.cameraDevice == 1)
 static BOOL frontFlashActive;
@@ -11,8 +28,8 @@ static float previousBacklightLevel;
 static UIView *flashView = nil;
 static NSDictionary *prefDict = nil;
 
-#define FrontFlashOnInPhoto Bool(prefDict, @"FrontFlashOnInPhoto", NO)
-#define FrontFlashOnInVideo Bool(prefDict, @"FrontFlashOnInVideo", NO)
+#define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto", YES)
+#define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo", YES)
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
 
 @interface PLCameraView
@@ -79,7 +96,7 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 		GSEventSetBacklightLevel(1.0);
 		UIWindow* window = [UIApplication sharedApplication].keyWindow;
    		flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
-    	flashView.backgroundColor = [UIColor whiteColor];
+    	SwitchColor
     	[window addSubview:flashView];
     	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
     		%orig;
