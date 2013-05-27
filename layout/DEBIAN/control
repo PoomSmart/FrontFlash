@@ -2,9 +2,9 @@ Package: org.thebigboss.FrontFlash
 Name: FrontFlash
 Depends: mobilesubstrate, preferenceloader, firmware (>= 6.0)
 Conflicts: org.thebigboss.fronthdr
-Version: 1.0
+Version: 1.1
 Architecture: iphoneos-arm
-Description: Enable Flash in Front-Facing Camera, even in iPad.
+Description: simulate Flash in Front-Facing Camera, even in iPad.
 Author: PoomSmart
 Section: Tweaks
 Icon: file:///Library/PreferenceLoader/Preferences/FrontFlash/FrontFlash@2x.png
