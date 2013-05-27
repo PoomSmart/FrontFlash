@@ -68,7 +68,8 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)_setCameraMode:(int)arg1 cameraDevice:(int)arg2
 {
 	%orig;
-	if (arg1 == 1 && arg2 == 1 && FrontFlashOn && self.flashMode == 1) BUG_FIX_1 = YES;	else BUG_FIX_1 = NO;
+	if (arg1 == 1 && arg2 == 1 && FrontFlashOn && self.flashMode == 1) BUG_FIX_1 = YES;
+	else BUG_FIX_1 = NO;
 }
 
 %end
@@ -96,11 +97,19 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 		GSEventSetBacklightLevel(1.0);
 		UIWindow* window = [UIApplication sharedApplication].keyWindow;
    		flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
+<<<<<<< HEAD
     	SwitchColor
     	[window addSubview:flashView];
     	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
     		%orig;
     	});
+=======
+    		flashView.backgroundColor = [UIColor whiteColor];
+    		[window addSubview:flashView];
+    		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+    			%orig;
+    		});
+>>>>>>> 5e911dc092752c7e3fea173791a87909bd4e46f1
     } else %orig;
 }
 
@@ -110,14 +119,14 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
     if (flashView != nil && isFrontCamera && FrontFlashOnInPhoto) {
    		[UIView animateWithDuration:1.2 delay:0.0 options:0
                 animations:^{
-    				flashView.alpha = 0.0f;
+    			flashView.alpha = 0.0f;
                 }
-        		completion:^(BOOL finished) {
-					[flashView removeFromSuperview];
-					flashView = nil;
-					[flashView release];
-					[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
-					GSEventSetBacklightLevel(previousBacklightLevel);
+        	completion:^(BOOL finished) {
+			[flashView removeFromSuperview];
+			flashView = nil;
+			[flashView release];
+			[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+			GSEventSetBacklightLevel(previousBacklightLevel);
                 }];
     }
 }
@@ -133,14 +142,14 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
     if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
    		[UIView animateWithDuration:1.2 delay:0.0 options:0
                 animations:^{
-    				flashView.alpha = 0.0f;
+    			flashView.alpha = 0.0f;
                 }
-        		completion:^(BOOL finished) {
-					[flashView removeFromSuperview];
-					flashView = nil;
-					[flashView release];
-					[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
-					GSEventSetBacklightLevel(previousBacklightLevel);
+        	completion:^(BOOL finished) {
+			[flashView removeFromSuperview];
+			flashView = nil;
+			[flashView release];
+			[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+			GSEventSetBacklightLevel(previousBacklightLevel);
                 }];
     }
 }
