@@ -3,7 +3,7 @@
 #define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
 #define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"
 #define Bool(key, defaultBoolValue) ([[prefDict objectForKey:key] boolValue] ?: defaultBoolValue)
-#define Color(key) ([[prefDict objectForKey:key] floatValue] ?: 1.0f)
+#define Color(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] floatValue] : 1.0f)
 
 #define SwitchColor \
 					switch ([[prefDict objectForKey:@"colorProfile"] intValue] ?: 1) { \
@@ -22,27 +22,26 @@
 					}
 
 #define isFrontCamera ((self.cameraMode == 0 || self.cameraMode == 1) && self.cameraDevice == 1)
-static BOOL frontFlashActive;
-static BOOL BUG_FIX_1;
-static float previousBacklightLevel;
-static UIView *flashView = nil;
-static NSDictionary *prefDict = nil;
-
 #define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto", YES)
 #define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo", YES)
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
 
+static float previousBacklightLevel;
+static UIView *flashView = nil;
+static NSDictionary *prefDict = nil;
+
 @interface PLCameraView
-@property(nonatomic) int flashMode;
-@property(nonatomic) int videoFlashMode;
 @property(nonatomic) int cameraMode;
 @property(nonatomic) int cameraDevice;
 @end
 
-@interface PLCameraController
-@property(nonatomic) int flashMode;
+@interface PLCameraController : NSObject
 @property(nonatomic) int cameraMode;
 @property(nonatomic) int cameraDevice;
+@end
+
+@interface PLCameraFlashButton
+@property(assign, nonatomic) int flashMode;
 @end
 
 static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
@@ -55,23 +54,6 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 
 - (BOOL)hasFlash { return FrontFlashOn && isFrontCamera ? YES : %orig; }
 
-- (void)_setFlashMode:(int)mode force:(BOOL)arg2
-{
-	%orig;
-	if (isFrontCamera && FrontFlashOn) {
-		if (mode == 1) frontFlashActive = YES;
-		if (mode == -1) frontFlashActive = NO;
-		if (mode == 0) frontFlashActive = NO;
-	}
-}
-
-- (void)_setCameraMode:(int)arg1 cameraDevice:(int)arg2
-{
-	%orig;
-	if (arg1 == 1 && arg2 == 1 && FrontFlashOn && self.flashMode == 1) BUG_FIX_1 = YES;
-	else BUG_FIX_1 = NO;
-}
-
 %end
 
 %hook PLCameraView
@@ -79,10 +61,7 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)previewStartedOpenIrisAnimationFinished
 {
 	if (FrontFlashOn) {
-		if (isFrontCamera && self.flashMode == 1) frontFlashActive = YES; else frontFlashActive = NO;
-		if (self.cameraMode == 1 && self.cameraDevice == 1) frontFlashActive = YES;
 		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad && FrontFlashOn) {
-			%class PLCameraFlashButton;
 			PLCameraFlashButton *flashButton = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
 			[(UIButton *)flashButton setHidden:(isFrontCamera ? NO : YES)];
 		}
@@ -92,7 +71,8 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 
 - (void)_shutterButtonClicked
 {
-	if (frontFlashActive && isFrontCamera && FrontFlashOn) {
+	PLCameraFlashButton *flashButton = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
+	if (flashButton.flashMode == 1 && isFrontCamera && FrontFlashOn) {
 		previousBacklightLevel = [UIScreen mainScreen].brightness;
 		GSEventSetBacklightLevel(1.0);
 		UIWindow* window = [UIApplication sharedApplication].keyWindow;
@@ -102,11 +82,6 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
     	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
     		%orig;
     	});
-    		flashView.backgroundColor = [UIColor whiteColor];
-    		[window addSubview:flashView];
-    		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
-    			%orig;
-    		});
     } else %orig;
 }
 
@@ -116,15 +91,15 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
     if (flashView != nil && isFrontCamera && FrontFlashOnInPhoto) {
    		[UIView animateWithDuration:1.2 delay:0.0 options:0
                 animations:^{
-    			flashView.alpha = 0.0f;
+    				flashView.alpha = 0.0f;
                 }
         	completion:^(BOOL finished) {
-			[flashView removeFromSuperview];
-			flashView = nil;
-			[flashView release];
-			[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
-			GSEventSetBacklightLevel(previousBacklightLevel);
-                }];
+				[flashView removeFromSuperview];
+				flashView = nil;
+				[flashView release];
+				[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+				GSEventSetBacklightLevel(previousBacklightLevel);
+        	}];
     }
 }
 
@@ -132,28 +107,28 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 {
     %orig;
     if (isFrontCamera && FrontFlashOnInVideo) {
-    	%class PLCameraFlashButton;
 		PLCameraFlashButton *flashButton = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
 		[flashButton setHidden:YES];
 	}
     if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
    		[UIView animateWithDuration:1.2 delay:0.0 options:0
                 animations:^{
-    			flashView.alpha = 0.0f;
+    				flashView.alpha = 0.0f;
                 }
         	completion:^(BOOL finished) {
-			[flashView removeFromSuperview];
-			flashView = nil;
-			[flashView release];
-			[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
-			GSEventSetBacklightLevel(previousBacklightLevel);
-                }];
+				[flashView removeFromSuperview];
+				flashView = nil;
+				[flashView release];
+				[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+				GSEventSetBacklightLevel(previousBacklightLevel);
+        	}];
     }
 }
 
 - (BOOL)_flashButtonShouldBeHidden { return isFrontCamera && FrontFlashOn ? NO : %orig; }
 
 %end
+
 
 %ctor {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];

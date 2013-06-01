@@ -1,7 +1,7 @@
 GO_EASY_ON_ME = 1
 
 include theos/makefiles/common.mk
-export ARCHS = armv7
+export ARCHS = armv7 armv7s
 TWEAK_NAME = FrontFlash
 FrontFlash_FILES = FrontFlash.xm
 FrontFlash_FRAMEWORKS = UIKit
