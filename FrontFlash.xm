@@ -26,6 +26,7 @@
 #define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo", YES)
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
 
+static BOOL frontFlashActive;
 static float previousBacklightLevel;
 static UIView *flashView = nil;
 static NSDictionary *prefDict = nil;
@@ -52,6 +53,16 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 
 %hook PLCameraController
 
+- (void)_setFlashMode:(int)mode force:(BOOL)arg2
+{
+	%orig;
+	if (isFrontCamera && FrontFlashOn) {
+		if (mode == 1) frontFlashActive = YES;
+		if (mode == -1) frontFlashActive = NO;
+		if (mode == 0) frontFlashActive = NO;
+	}
+}
+
 - (BOOL)hasFlash { return FrontFlashOn && isFrontCamera ? YES : %orig; }
 
 %end
@@ -61,6 +72,7 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)previewStartedOpenIrisAnimationFinished
 {
 	if (FrontFlashOn) {
+		if (self.cameraMode == 1 && self.cameraDevice == 1) frontFlashActive = YES;
 		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad && FrontFlashOn) {
 			PLCameraFlashButton *flashButton = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
 			[(UIButton *)flashButton setHidden:(isFrontCamera ? NO : YES)];
@@ -72,7 +84,7 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)_shutterButtonClicked
 {
 	PLCameraFlashButton *flashButton = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
-	if (flashButton.flashMode == 1 && isFrontCamera && FrontFlashOn) {
+	if ((flashButton.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
 		previousBacklightLevel = [UIScreen mainScreen].brightness;
 		GSEventSetBacklightLevel(1.0);
 		UIWindow* window = [UIApplication sharedApplication].keyWindow;
