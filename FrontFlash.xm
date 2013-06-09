@@ -2,28 +2,11 @@
 
 #define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
 #define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"
-#define Bool(key, defaultBoolValue) ([[prefDict objectForKey:key] boolValue] ?: defaultBoolValue)
-#define Color(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] floatValue] : 1.0f)
-
-#define SwitchColor \
-					switch ([[prefDict objectForKey:@"colorProfile"] intValue] ?: 1) { \
-						case 1: \
-							flashView.backgroundColor = [UIColor whiteColor]; \
-							break; \
-						case 2: \
-							flashView.backgroundColor = [UIColor colorWithRed:255/255.0f green:252/255.0f blue:120/255.0f alpha:1.0f]; \
-							break; \
-						case 3: \
-							flashView.backgroundColor = [UIColor colorWithRed:168/255.0f green:239/255.0f blue:255/255.0f alpha:1.0f]; \
-							break; \
-						case 4: \
-							flashView.backgroundColor = [UIColor colorWithRed:Color(@"R") green:Color(@"G") blue:Color(@"B") alpha:1.0f]; \
-							break; \
-					}
-
+#define Bool(key) [[prefDict objectForKey:key] boolValue]
+#define Color(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] floatValue] : 1.0f)					
 #define isFrontCamera ((self.cameraMode == 0 || self.cameraMode == 1) && self.cameraDevice == 1)
-#define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto", YES)
-#define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo", YES)
+#define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto")
+#define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo")
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
 
 static BOOL frontFlashActive;
@@ -32,11 +15,12 @@ static UIView *flashView = nil;
 static NSDictionary *prefDict = nil;
 
 @interface PLCameraView
+@property(nonatomic) int flashMode;
 @property(nonatomic) int cameraMode;
 @property(nonatomic) int cameraDevice;
 @end
 
-@interface PLCameraController : NSObject
+@interface PLCameraController
 @property(nonatomic) int cameraMode;
 @property(nonatomic) int cameraDevice;
 @end
@@ -57,13 +41,14 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 {
 	%orig;
 	if (isFrontCamera && FrontFlashOn) {
-		if (mode == 1) frontFlashActive = YES;
-		if (mode == -1) frontFlashActive = NO;
-		if (mode == 0) frontFlashActive = NO;
+		frontFlashActive = (mode == 1) ? YES : NO;
 	}
 }
 
-- (BOOL)hasFlash { return FrontFlashOn && isFrontCamera ? YES : %orig; }
+- (BOOL)hasFlash
+{
+	return FrontFlashOn && isFrontCamera ? YES : %orig;
+}
 
 %end
 
@@ -72,7 +57,8 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)previewStartedOpenIrisAnimationFinished
 {
 	if (FrontFlashOn) {
-		if (self.cameraMode == 1 && self.cameraDevice == 1) frontFlashActive = YES;
+		frontFlashActive = (isFrontCamera && self.flashMode == 1) ? YES : NO;
+		frontFlashActive = (self.cameraMode == 1 && self.cameraDevice == 1) ? YES : NO;
 		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad && FrontFlashOn) {
 			PLCameraFlashButton *flashButton = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
 			[(UIButton *)flashButton setHidden:(isFrontCamera ? NO : YES)];
@@ -89,7 +75,20 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 		GSEventSetBacklightLevel(1.0);
 		UIWindow* window = [UIApplication sharedApplication].keyWindow;
    		flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
-    	SwitchColor
+    	switch ([[prefDict objectForKey:@"colorProfile"] intValue]) {
+			case 1:
+				flashView.backgroundColor = [UIColor whiteColor];
+				break;
+			case 2:
+				flashView.backgroundColor = [UIColor colorWithRed:255/255.0f green:252/255.0f blue:120/255.0f alpha:1.0f];
+				break;
+			case 3:
+				flashView.backgroundColor = [UIColor colorWithRed:168/255.0f green:239/255.0f blue:255/255.0f alpha:1.0f];
+				break;
+			case 4:
+				flashView.backgroundColor = [UIColor colorWithRed:Color(@"R") green:Color(@"G") blue:Color(@"B") alpha:1.0f];
+				break;
+		}
     	[window addSubview:flashView];
     	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
     		%orig;
@@ -137,7 +136,10 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
     }
 }
 
-- (BOOL)_flashButtonShouldBeHidden { return isFrontCamera && FrontFlashOn ? NO : %orig; }
+- (BOOL)_flashButtonShouldBeHidden
+{
+	return isFrontCamera && FrontFlashOn ? NO : %orig;
+}
 
 %end
 
