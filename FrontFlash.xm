@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import <GraphicsServices/GSCapability.h>
 
 #define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
 #define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"
@@ -8,6 +9,10 @@
 #define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto")
 #define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo")
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
+
+#define declareFlashBtn() \
+	%c(PLCameraFlashButton); \
+	PLCameraFlashButton *flashBtn = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
 
 static BOOL frontFlashActive;
 static float previousBacklightLevel;
@@ -20,20 +25,27 @@ static NSDictionary *prefDict = nil;
 @property(nonatomic) int cameraDevice;
 @end
 
-@interface PLCameraController
+@interface PLCameraController : NSObject
 @property(nonatomic) int cameraMode;
 @property(nonatomic) int cameraDevice;
 @end
 
-@interface PLCameraFlashButton
-@property(assign, nonatomic) int flashMode;
+@interface PLReorientingButton : UIButton
+- (void)setHidden:(BOOL)hidden animationDuration:(double)duration;
 @end
+
+@interface PLCameraFlashButton : PLReorientingButton
+@property(assign, nonatomic) int flashMode;
+@property(assign, nonatomic, getter=isAutoHidden) BOOL autoHidden;
+@end
+
 
 static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
 	[prefDict release];
 	prefDict = [[NSDictionary alloc] initWithContentsOfFile:PREF_PATH];
 }
+
 
 %hook PLCameraController
 
@@ -47,30 +59,57 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 
 - (BOOL)hasFlash
 {
-	return FrontFlashOn && isFrontCamera ? YES : %orig;
+	return FrontFlashOn ? YES : %orig;
 }
 
 %end
 
 %hook PLCameraView
 
-- (void)previewStartedOpenIrisAnimationFinished
+- (void)_postCaptureCleanup
 {
-	if (FrontFlashOn) {
-		frontFlashActive = (isFrontCamera && self.flashMode == 1) ? YES : NO;
-		frontFlashActive = (self.cameraMode == 1 && self.cameraDevice == 1) ? YES : NO;
-		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad && FrontFlashOn) {
-			PLCameraFlashButton *flashButton = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
-			[(UIButton *)flashButton setHidden:(isFrontCamera ? NO : YES)];
-		}
-	}
 	%orig;
+	if (isFrontCamera && FrontFlashOn) {
+		declareFlashBtn()
+		[flashBtn setHidden:NO animationDuration:1.0f];
+	}
+}
+
+- (void)_commonPostVideoCaptureCleanup
+{
+	%orig;
+	if (isFrontCamera && FrontFlashOn) {
+		declareFlashBtn()
+		[flashBtn setHidden:NO];
+	}
+}
+
+- (void)_updateOverlayControls
+{
+	%orig;
+	if (isFrontCamera && FrontFlashOn) {
+		declareFlashBtn()
+		[flashBtn setHidden:NO animationDuration:1.0f];
+	}
+}
+
+- (void)cameraControllerVideoCaptureDidStart:(id)arg1
+{
+	%orig;
+	if (isFrontCamera && FrontFlashOn) {
+		declareFlashBtn()
+		[flashBtn setAutoHidden:NO];
+	}
 }
 
 - (void)_shutterButtonClicked
 {
-	PLCameraFlashButton *flashButton = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
-	if ((flashButton.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
+	declareFlashBtn()
+	if (FrontFlashOn) {
+		[flashBtn setHidden:NO];
+		[flashBtn setUserInteractionEnabled:YES];
+	}
+	if ((flashBtn.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
 		previousBacklightLevel = [UIScreen mainScreen].brightness;
 		GSEventSetBacklightLevel(1.0);
 		UIWindow* window = [UIApplication sharedApplication].keyWindow;
@@ -117,10 +156,6 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)takePictureDuringVideoOpenIrisAnimationFinished
 {
     %orig;
-    if (isFrontCamera && FrontFlashOnInVideo) {
-		PLCameraFlashButton *flashButton = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
-		[flashButton setHidden:YES];
-	}
     if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
    		[UIView animateWithDuration:1.2 delay:0.0 options:0
                 animations:^{
@@ -134,11 +169,6 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 			GSEventSetBacklightLevel(previousBacklightLevel);
         	}];
     }
-}
-
-- (BOOL)_flashButtonShouldBeHidden
-{
-	return isFrontCamera && FrontFlashOn ? NO : %orig;
 }
 
 %end
