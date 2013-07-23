@@ -22,11 +22,6 @@ static NSDictionary *prefDict = nil;
 - (void)setBacklightLevel:(float)level;
 @end
 
-@interface PLCameraController : NSObject
-+ (id)sharedInstance;
-- (BOOL)isCapturingVideo;
-@end
-
 @interface PLReorientingButton : UIButton
 - (void)setHidden:(BOOL)hidden animationDuration:(double)duration;
 @end
@@ -70,7 +65,7 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 
 - (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
 {
-	if (isFrontCamera && FrontFlashOn && [[%c(PLCameraController) sharedInstance] isCapturingVideo] && mode == 0) {
+	if (isFrontCamera && FrontFlashOn && mode == 0) {
 		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"FrontFlash" message:@"Currrently no implementation for Auto mode." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
     	[alert show];
     	[alert release];
