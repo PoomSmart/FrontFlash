@@ -5,29 +5,26 @@
 #define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"
 #define Bool(key) [[prefDict objectForKey:key] boolValue]
 #define Color(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] floatValue] : 1.0f)					
-#define isFrontCamera ((self.cameraMode == 0 || self.cameraMode == 1) && self.cameraDevice == 1)
 #define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto")
 #define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo")
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
 
 #define declareFlashBtn() \
-	%c(PLCameraFlashButton); \
 	PLCameraFlashButton *flashBtn = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
 
+static BOOL isFrontCamera;
 static BOOL frontFlashActive;
 static float previousBacklightLevel;
 static UIView *flashView = nil;
 static NSDictionary *prefDict = nil;
 
-@interface PLCameraView
-@property(nonatomic) int flashMode;
-@property(nonatomic) int cameraMode;
-@property(nonatomic) int cameraDevice;
+@interface UIApplication (FrontFlash)
+- (void)setBacklightLevel:(float)level;
 @end
 
 @interface PLCameraController : NSObject
-@property(nonatomic) int cameraMode;
-@property(nonatomic) int cameraDevice;
++ (id)sharedInstance;
+- (BOOL)isCapturingVideo;
 @end
 
 @interface PLReorientingButton : UIButton
@@ -39,7 +36,6 @@ static NSDictionary *prefDict = nil;
 @property(assign, nonatomic, getter=isAutoHidden) BOOL autoHidden;
 @end
 
-
 static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
 	[prefDict release];
@@ -49,6 +45,17 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 
 %hook PLCameraController
 
+- (BOOL)hasFlash
+{
+	return FrontFlashOn ? YES : %orig;
+}
+
+- (void)_setCameraMode:(int)mode cameraDevice:(int)device
+{
+	isFrontCamera = device == 1 ? YES : NO;
+	%orig;
+}
+
 - (void)_setFlashMode:(int)mode force:(BOOL)arg2
 {
 	%orig;
@@ -57,9 +64,19 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 	}
 }
 
-- (BOOL)hasFlash
+%end
+
+%hook PLCameraFlashButton
+
+- (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
 {
-	return FrontFlashOn ? YES : %orig;
+	if (isFrontCamera && FrontFlashOn && [[%c(PLCameraController) sharedInstance] isCapturingVideo] && mode == 0) {
+		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"FrontFlash" message:@"Currrently no implementation for Auto mode." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+    	[alert show];
+    	[alert release];
+		%orig(-1, animated);
+	}
+	else %orig;
 }
 
 %end
@@ -84,12 +101,27 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 	}
 }
 
-- (void)_updateOverlayControls
+- (void)cameraShutterClicked:(id)arg1
 {
 	%orig;
 	if (isFrontCamera && FrontFlashOn) {
 		declareFlashBtn()
-		[flashBtn setHidden:NO animationDuration:1.0f];
+		[flashBtn setHidden:NO];
+		[flashBtn setUserInteractionEnabled:YES];
+	}
+}
+
+- (void)_updateOverlayControls
+{
+	%orig;
+	if (FrontFlashOn) {
+		declareFlashBtn()
+		if (isFrontCamera)
+			[flashBtn setHidden:NO animationDuration:1.0f];
+		else {
+			if (!GSSystemHasCapability(kGSCameraFlashCapability))
+				[flashBtn setHidden:YES animationDuration:1.0f];
+		}
 	}
 }
 
