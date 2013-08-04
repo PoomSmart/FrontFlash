@@ -84,7 +84,7 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 	%orig;
 	if (isFrontCamera && FrontFlashOn) {
 		declareFlashBtn()
-		[flashBtn setHidden:NO animationDuration:1.0f];
+		[flashBtn setHidden:NO];
 	}
 }
 
@@ -113,10 +113,10 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 	if (FrontFlashOn) {
 		declareFlashBtn()
 		if (isFrontCamera)
-			[flashBtn setHidden:NO animationDuration:1.0f];
+			[flashBtn setHidden:NO];
 		else {
 			if (!GSSystemHasCapability(kGSCameraFlashCapability))
-				[flashBtn setHidden:YES animationDuration:1.0f];
+				[flashBtn setHidden:YES];
 		}
 	}
 }
