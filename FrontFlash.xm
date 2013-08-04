@@ -3,11 +3,12 @@
 
 #define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
 #define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"
-#define Bool(key) [[prefDict objectForKey:key] boolValue]
+#define Bool(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] boolValue] : YES)
 #define Color(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] floatValue] : 1.0f)					
 #define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto")
 #define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo")
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
+#define isiOS5 (kCFCoreFoundationVersionNumber < 793.00)
 
 #define declareFlashBtn() \
 	PLCameraFlashButton *flashBtn = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
@@ -129,6 +130,59 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 	}
 }
 
+%group SC2iOS5
+
+- (void)captureImage
+{
+	declareFlashBtn()
+	if (FrontFlashOn) {
+		[flashBtn setHidden:NO];
+		[flashBtn setUserInteractionEnabled:YES];
+	}
+	if ((flashBtn.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
+		previousBacklightLevel = [UIScreen mainScreen].brightness;
+		GSEventSetBacklightLevel(1.0);
+		UIWindow* window = [UIApplication sharedApplication].keyWindow;
+   		flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
+    		switch ([[prefDict objectForKey:@"colorProfile"] intValue]) {
+			case 1:
+				flashView.backgroundColor = [UIColor whiteColor];
+				break;
+			case 2:
+				flashView.backgroundColor = [UIColor colorWithRed:255/255.0f green:252/255.0f blue:120/255.0f alpha:1.0f];
+				break;
+			case 3:
+				flashView.backgroundColor = [UIColor colorWithRed:168/255.0f green:239/255.0f blue:255/255.0f alpha:1.0f];
+				break;
+			case 4:
+				flashView.backgroundColor = [UIColor colorWithRed:Color(@"R") green:Color(@"G") blue:Color(@"B") alpha:1.0f];
+				break;
+			default:
+				flashView.backgroundColor = [UIColor whiteColor];
+				break;
+		}
+    	[window addSubview:flashView];
+    	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+    		%orig;
+    		if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
+   			[UIView animateWithDuration:1.2 delay:0.0 options:0
+                animations:^{
+    			flashView.alpha = 0.0f;
+                }
+        	completion:^(BOOL finished) {
+			[flashView removeFromSuperview];
+			flashView = nil;
+			[flashView release];
+			[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+			GSEventSetBacklightLevel(previousBacklightLevel);
+        	}];
+    }
+    	});
+    } else %orig;
+}
+
+%end
+
 - (void)_shutterButtonClicked
 {
 	declareFlashBtn()
@@ -153,6 +207,9 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 				break;
 			case 4:
 				flashView.backgroundColor = [UIColor colorWithRed:Color(@"R") green:Color(@"G") blue:Color(@"B") alpha:1.0f];
+				break;
+			default:
+				flashView.backgroundColor = [UIColor whiteColor];
 				break;
 		}
     	[window addSubview:flashView];
@@ -205,5 +262,10 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	prefDict = [[NSDictionary alloc] initWithContentsOfFile:PREF_PATH];
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PreferencesChangedNotification), NULL, CFNotificationSuspensionBehaviorCoalesce);
+	if (isiOS5 && dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY)) {
+		dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY);
+		%init(SC2iOS5);
+	}
+	%init();
 	[pool release];
 }
