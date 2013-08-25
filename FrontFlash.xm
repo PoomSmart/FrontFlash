@@ -1,20 +1,21 @@
 #import <UIKit/UIKit.h>
-#import <GraphicsServices/GSCapability.h>
 
 #define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
 #define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"
 #define Bool(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] boolValue] : YES)
-#define Color(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] floatValue] : 1.0f)					
+#define Color(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] floatValue] : 1.f)					
 #define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto")
 #define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo")
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
-#define isiOS5 (kCFCoreFoundationVersionNumber < 793.00)
+static BOOL isiOS5 = (kCFCoreFoundationVersionNumber >= 675.00 && kCFCoreFoundationVersionNumber < 793.00);
 
 #define declareFlashBtn() \
 	PLCameraFlashButton *flashBtn = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
 
 static BOOL isFrontCamera;
 static BOOL frontFlashActive;
+static BOOL onFlash = NO;
+static BOOL reallyHasFlash;
 static float previousBacklightLevel;
 static UIView *flashView = nil;
 static NSDictionary *prefDict = nil;
@@ -32,10 +33,61 @@ static NSDictionary *prefDict = nil;
 @property(assign, nonatomic, getter=isAutoHidden) BOOL autoHidden;
 @end
 
+@interface PLCameraController
+@property(assign, nonatomic) int cameraDevice;
++ (id)sharedInstance;
+@end
+
+@interface PLCameraView
+@property(assign, nonatomic) int cameraMode;
+@property(assign, nonatomic) int cameraDevice;
+@end
+
 static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
 	[prefDict release];
 	prefDict = [[NSDictionary alloc] initWithContentsOfFile:PREF_PATH];
+}
+
+static void flashScreen()
+{
+	previousBacklightLevel = [UIScreen mainScreen].brightness;
+	GSEventSetBacklightLevel(1.0);
+	UIWindow* window = [UIApplication sharedApplication].keyWindow;
+   	flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
+    	switch ([[prefDict objectForKey:@"colorProfile"] intValue]) {
+		case 1:
+			flashView.backgroundColor = [UIColor whiteColor];
+			break;
+		case 2:
+			flashView.backgroundColor = [UIColor colorWithRed:255/255.0f green:252/255.0f blue:120/255.0f alpha:1.0f];
+			break;
+		case 3:
+			flashView.backgroundColor = [UIColor colorWithRed:168/255.0f green:239/255.0f blue:255/255.0f alpha:1.0f];
+			break;
+		case 4:
+			flashView.backgroundColor = [UIColor colorWithRed:Color(@"R") green:Color(@"G") blue:Color(@"B") alpha:1.0f];
+			break;
+		default:
+			flashView.backgroundColor = [UIColor whiteColor];
+			break;
+	}
+    [window addSubview:flashView];
+}
+
+static void unflashScreen()
+{
+	[UIView animateWithDuration:1.2 delay:0.0 options:0
+                animations:^{
+    			flashView.alpha = 0.0f;
+                }
+        	completion:^(BOOL finished) {
+			[flashView removeFromSuperview];
+			flashView = nil;
+			[flashView release];
+			[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+			GSEventSetBacklightLevel(previousBacklightLevel);
+        	}];
 }
 
 
@@ -43,7 +95,8 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 
 - (BOOL)hasFlash
 {
-	return FrontFlashOn ? YES : %orig;
+	reallyHasFlash = %orig;
+	return FrontFlashOn && onFlash ? YES : %orig;
 }
 
 - (void)_setCameraMode:(int)mode cameraDevice:(int)device
@@ -55,8 +108,9 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)_setFlashMode:(int)mode force:(BOOL)arg2
 {
 	%orig;
-	if (isFrontCamera && FrontFlashOn) {
-		frontFlashActive = (mode == 1) ? YES : NO;
+	if (FrontFlashOn) {
+		if (self.cameraDevice == 1)
+			frontFlashActive = mode == 1 ? YES : NO;
 	}
 }
 
@@ -66,13 +120,14 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 
 - (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
 {
-	if (isFrontCamera && FrontFlashOn && mode == 0) {
-		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"FrontFlash" message:@"Currrently no implementation for Auto mode." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
-    	[alert show];
-    	[alert release];
-		%orig(-1, animated);
-	}
-	else %orig;
+	if (FrontFlashOn) {
+		if (mode == 0 && isFrontCamera) {
+			UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"FrontFlash" message:@"Currrently no implementation for Auto mode." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+    		[alert show];
+    		[alert release];
+			%orig(-1, animated);
+		} else %orig;
+	} else %orig;
 }
 
 %end
@@ -82,40 +137,57 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)_postCaptureCleanup
 {
 	%orig;
-	if (isFrontCamera && FrontFlashOn) {
+	if (FrontFlashOn) {
 		declareFlashBtn()
-		[flashBtn setHidden:NO];
+		if (self.cameraDevice == 1)
+			[flashBtn setHidden:NO];
+		else {
+			if (!reallyHasFlash)
+				[flashBtn setHidden:YES];
+		}
 	}
 }
 
 - (void)_commonPostVideoCaptureCleanup
 {
 	%orig;
-	if (isFrontCamera && FrontFlashOn) {
+	if (FrontFlashOn) {
 		declareFlashBtn()
-		[flashBtn setHidden:NO];
+		if (self.cameraDevice == 1)
+			[flashBtn setHidden:NO];
+		else {
+			if (!reallyHasFlash)
+				[flashBtn setHidden:YES];
+		}
 	}
 }
 
 - (void)cameraShutterClicked:(id)arg1
 {
 	%orig;
-	if (isFrontCamera && FrontFlashOn) {
+	if (FrontFlashOn) {
 		declareFlashBtn()
-		[flashBtn setHidden:NO];
-		[flashBtn setUserInteractionEnabled:YES];
+		if (self.cameraDevice == 1) {
+			[flashBtn setHidden:NO];
+			[flashBtn setUserInteractionEnabled:YES];
+		} else {
+			if (!reallyHasFlash)
+				[flashBtn setHidden:YES];
+		}
 	}
 }
 
 - (void)_updateOverlayControls
 {
+	onFlash = YES;
 	%orig;
+	onFlash = NO;
 	if (FrontFlashOn) {
 		declareFlashBtn()
-		if (isFrontCamera)
+		if (self.cameraDevice == 1)
 			[flashBtn setHidden:NO];
 		else {
-			if (!GSSystemHasCapability(kGSCameraFlashCapability))
+			if (!reallyHasFlash)
 				[flashBtn setHidden:YES];
 		}
 	}
@@ -124,9 +196,10 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)cameraControllerVideoCaptureDidStart:(id)arg1
 {
 	%orig;
-	if (isFrontCamera && FrontFlashOn) {
+	if (FrontFlashOn) {
 		declareFlashBtn()
-		[flashBtn setAutoHidden:NO];
+		if (self.cameraDevice == 1)
+			[flashBtn setAutoHidden:NO];
 	}
 }
 
@@ -140,28 +213,7 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 		[flashBtn setUserInteractionEnabled:YES];
 	}
 	if ((flashBtn.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
-		previousBacklightLevel = [UIScreen mainScreen].brightness;
-		GSEventSetBacklightLevel(1.0);
-		UIWindow* window = [UIApplication sharedApplication].keyWindow;
-   		flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
-    		switch ([[prefDict objectForKey:@"colorProfile"] intValue]) {
-			case 1:
-				flashView.backgroundColor = [UIColor whiteColor];
-				break;
-			case 2:
-				flashView.backgroundColor = [UIColor colorWithRed:255/255.0f green:252/255.0f blue:120/255.0f alpha:1.0f];
-				break;
-			case 3:
-				flashView.backgroundColor = [UIColor colorWithRed:168/255.0f green:239/255.0f blue:255/255.0f alpha:1.0f];
-				break;
-			case 4:
-				flashView.backgroundColor = [UIColor colorWithRed:Color(@"R") green:Color(@"G") blue:Color(@"B") alpha:1.0f];
-				break;
-			default:
-				flashView.backgroundColor = [UIColor whiteColor];
-				break;
-		}
-    	[window addSubview:flashView];
+		flashScreen();
     	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
     		%orig;
     		if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
@@ -187,32 +239,16 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 {
 	declareFlashBtn()
 	if (FrontFlashOn) {
-		[flashBtn setHidden:NO];
-		[flashBtn setUserInteractionEnabled:YES];
+		if (self.cameraDevice == 1) {
+			[flashBtn setHidden:NO];
+			[flashBtn setUserInteractionEnabled:YES];
+		} else {
+			if (!reallyHasFlash)
+				[flashBtn setHidden:YES];
+		}
 	}
 	if ((flashBtn.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
-		previousBacklightLevel = [UIScreen mainScreen].brightness;
-		GSEventSetBacklightLevel(1.0);
-		UIWindow* window = [UIApplication sharedApplication].keyWindow;
-   		flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
-    		switch ([[prefDict objectForKey:@"colorProfile"] intValue]) {
-			case 1:
-				flashView.backgroundColor = [UIColor whiteColor];
-				break;
-			case 2:
-				flashView.backgroundColor = [UIColor colorWithRed:255/255.0f green:252/255.0f blue:120/255.0f alpha:1.0f];
-				break;
-			case 3:
-				flashView.backgroundColor = [UIColor colorWithRed:168/255.0f green:239/255.0f blue:255/255.0f alpha:1.0f];
-				break;
-			case 4:
-				flashView.backgroundColor = [UIColor colorWithRed:Color(@"R") green:Color(@"G") blue:Color(@"B") alpha:1.0f];
-				break;
-			default:
-				flashView.backgroundColor = [UIColor whiteColor];
-				break;
-		}
-    	[window addSubview:flashView];
+		flashScreen();
     	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
     		%orig;
     	});
@@ -222,37 +258,15 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 - (void)takePictureOpenIrisAnimationFinished
 {
     %orig;
-    if (flashView != nil && isFrontCamera && FrontFlashOnInPhoto) {
-   		[UIView animateWithDuration:1.2 delay:0.0 options:0
-                animations:^{
-    			flashView.alpha = 0.0f;
-                }
-        	completion:^(BOOL finished) {
-			[flashView removeFromSuperview];
-			flashView = nil;
-			[flashView release];
-			[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
-			GSEventSetBacklightLevel(previousBacklightLevel);
-        	}];
-    }
+    if (flashView != nil && isFrontCamera && FrontFlashOnInPhoto)
+   		unflashScreen();
 }
 
 - (void)takePictureDuringVideoOpenIrisAnimationFinished
 {
     %orig;
-    if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
-   		[UIView animateWithDuration:1.2 delay:0.0 options:0
-                animations:^{
-    			flashView.alpha = 0.0f;
-                }
-        	completion:^(BOOL finished) {
-			[flashView removeFromSuperview];
-			flashView = nil;
-			[flashView release];
-			[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
-			GSEventSetBacklightLevel(previousBacklightLevel);
-        	}];
-    }
+    if (flashView != nil && isFrontCamera && FrontFlashOnInVideo)
+   		unflashScreen();
 }
 
 %end
