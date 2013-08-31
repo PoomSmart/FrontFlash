@@ -11,6 +11,9 @@ static BOOL isiOS5 = (kCFCoreFoundationVersionNumber >= 675.00 && kCFCoreFoundat
 
 #define declareFlashBtn() \
 	PLCameraFlashButton *flashBtn = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
+	
+#define kDelayDuration 0.2
+#define kFadeDuration 0.5
 
 static BOOL isFrontCamera;
 static BOOL frontFlashActive;
@@ -33,9 +36,8 @@ static NSDictionary *prefDict = nil;
 @property(assign, nonatomic, getter=isAutoHidden) BOOL autoHidden;
 @end
 
-@interface PLCameraController
+@interface PLCameraController : NSObject
 @property(assign, nonatomic) int cameraDevice;
-+ (id)sharedInstance;
 @end
 
 @interface PLCameraView
@@ -77,7 +79,7 @@ static void flashScreen()
 
 static void unflashScreen()
 {
-	[UIView animateWithDuration:1.2 delay:0.0 options:0
+	[UIView animateWithDuration:kFadeDuration delay:0.0 options:0
                 animations:^{
     			flashView.alpha = 0.0f;
                 }
@@ -214,10 +216,10 @@ static void unflashScreen()
 	}
 	if ((flashBtn.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
 		flashScreen();
-    	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+    	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
     		%orig;
     		if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
-   			[UIView animateWithDuration:1.2 delay:0.0 options:0
+   			[UIView animateWithDuration:kFadeDuration delay:0.0 options:0
                 animations:^{
     			flashView.alpha = 0.0f;
                 }
@@ -249,7 +251,7 @@ static void unflashScreen()
 	}
 	if ((flashBtn.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
 		flashScreen();
-    	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+    	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
     		%orig;
     	});
     } else %orig;
@@ -258,15 +260,19 @@ static void unflashScreen()
 - (void)takePictureOpenIrisAnimationFinished
 {
     %orig;
-    if (flashView != nil && isFrontCamera && FrontFlashOnInPhoto)
-   		unflashScreen();
+    if (FrontFlashOnInPhoto) {
+    	if (flashView != nil && isFrontCamera)
+   			unflashScreen();
+   	}
 }
 
 - (void)takePictureDuringVideoOpenIrisAnimationFinished
 {
     %orig;
-    if (flashView != nil && isFrontCamera && FrontFlashOnInVideo)
-   		unflashScreen();
+    if (FrontFlashOnInVideo) {
+    	if (flashView != nil && isFrontCamera)
+   			unflashScreen();
+   	}
 }
 
 %end
@@ -276,9 +282,10 @@ static void unflashScreen()
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	prefDict = [[NSDictionary alloc] initWithContentsOfFile:PREF_PATH];
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PreferencesChangedNotification), NULL, CFNotificationSuspensionBehaviorCoalesce);
-	if (isiOS5 && dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY)) {
-		dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY);
-		%init(SC2iOS5);
+	if (isiOS5) {
+		void *openSC2 = dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY);
+		if (openSC2 != NULL)
+			%init(SC2iOS5);
 	}
 	%init();
 	[pool release];
