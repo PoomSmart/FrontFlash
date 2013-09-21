@@ -7,12 +7,11 @@
 #define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto")
 #define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo")
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
-static BOOL isiOS5 = (kCFCoreFoundationVersionNumber >= 675.00 && kCFCoreFoundationVersionNumber < 793.00);
 
 #define declareFlashBtn() \
 	PLCameraFlashButton *flashBtn = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
 	
-#define kDelayDuration 0.2
+#define kDelayDuration 0.3
 #define kFadeDuration 0.5
 
 static BOOL isFrontCamera;
@@ -57,6 +56,7 @@ static void flashScreen()
 	GSEventSetBacklightLevel(1.0);
 	UIWindow* window = [UIApplication sharedApplication].keyWindow;
    	flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
+   	[flashView setTag:9596];
     	switch ([[prefDict objectForKey:@"colorProfile"] intValue]) {
 		case 1:
 			flashView.backgroundColor = [UIColor whiteColor];
@@ -98,7 +98,7 @@ static void unflashScreen()
 - (BOOL)hasFlash
 {
 	reallyHasFlash = %orig;
-	return FrontFlashOn && onFlash ? YES : %orig;
+	return FrontFlashOn && onFlash ? YES : reallyHasFlash;
 }
 
 - (void)_setCameraMode:(int)mode cameraDevice:(int)device
@@ -124,7 +124,7 @@ static void unflashScreen()
 {
 	if (FrontFlashOn) {
 		if (mode == 0 && isFrontCamera) {
-			UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"FrontFlash" message:@"Currrently no implementation for Auto mode." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+			UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"FrontFlash" message:@"No implementation for Auto mode." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
     		[alert show];
     		[alert release];
 			%orig(-1, animated);
@@ -282,7 +282,7 @@ static void unflashScreen()
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	prefDict = [[NSDictionary alloc] initWithContentsOfFile:PREF_PATH];
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PreferencesChangedNotification), NULL, CFNotificationSuspensionBehaviorCoalesce);
-	if (isiOS5) {
+	if (kCFCoreFoundationVersionNumber >= 675.00 && kCFCoreFoundationVersionNumber < 793.00) {
 		void *openSC2 = dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY);
 		if (openSC2 != NULL)
 			%init(SC2iOS5);
