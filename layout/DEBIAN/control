@@ -1,4 +1,4 @@
-Package: org.thebigboss.FrontFlash
+Package: org.thebigboss.frontflash
 Name: FrontFlash
 Depends: mobilesubstrate, preferenceloader, gsc.front-facing-camera, firmware (>= 5.0)
 Version: 1.2
