@@ -210,9 +210,11 @@ static void unflashScreen()
 - (void)captureImage
 {
 	declareFlashBtn()
-	if (FrontFlashOn) {
-		[flashBtn setHidden:NO];
-		[flashBtn setUserInteractionEnabled:YES];
+	if (FrontFlashOnInVideo) {
+		if (reallyHasFlash) {
+			[flashBtn setHidden:NO];
+			[flashBtn setUserInteractionEnabled:YES];
+		}
 	}
 	if ((flashBtn.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
 		flashScreen();
