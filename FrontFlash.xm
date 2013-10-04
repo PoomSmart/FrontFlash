@@ -22,12 +22,13 @@ static float previousBacklightLevel;
 static UIView *flashView = nil;
 static NSDictionary *prefDict = nil;
 
+extern "C" NSBundle *PLPhotoLibraryFrameworkBundle();
+
 @interface UIApplication (FrontFlash)
 - (void)setBacklightLevel:(float)level;
 @end
 
 @interface PLReorientingButton : UIButton
-- (void)setHidden:(BOOL)hidden animationDuration:(double)duration;
 @end
 
 @interface PLCameraFlashButton : PLReorientingButton
@@ -92,6 +93,16 @@ static void unflashScreen()
         	}];
 }
 
+
+%hook UIImage
+
+// This method will make FrontFlash works in iMessages app, I don't know why
++ (UIImage *)imageNamed:(NSString *)name inBundle:(NSBundle *)bundle
+{
+	return %orig;
+}
+
+%end
 
 %hook PLCameraController
 
