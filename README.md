@@ -3,4 +3,4 @@ FrontFlash
 
 simulate Flash in Front-Facing-Camera, even in iPad.
 
-For iOS 5 and 6.
+Compatible with iOS 4, 5 and 6.

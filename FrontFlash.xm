@@ -7,6 +7,7 @@
 #define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto")
 #define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo")
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
+#define isiOS4 (kCFCoreFoundationVersionNumber >= 550.32 && kCFCoreFoundationVersionNumber < 675.00)
 
 #define declareFlashBtn() \
 	PLCameraFlashButton *flashBtn = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
@@ -22,8 +23,6 @@ static float previousBacklightLevel;
 static UIView *flashView = nil;
 static NSDictionary *prefDict = nil;
 
-extern "C" NSBundle *PLPhotoLibraryFrameworkBundle();
-
 @interface UIApplication (FrontFlash)
 - (void)setBacklightLevel:(float)level;
 @end
@@ -33,6 +32,9 @@ extern "C" NSBundle *PLPhotoLibraryFrameworkBundle();
 
 @interface PLCameraFlashButton : PLReorientingButton
 @property(assign, nonatomic) int flashMode;
+@end
+
+@interface PLCameraFlashButton (iOS5Up)
 @property(assign, nonatomic, getter=isAutoHidden) BOOL autoHidden;
 @end
 
@@ -53,7 +55,8 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 
 static void flashScreen()
 {
-	previousBacklightLevel = [UIScreen mainScreen].brightness;
+	NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/com.apple.springboard.plist"];
+	previousBacklightLevel = isiOS4 ? ((dict != nil) ? [[dict objectForKey:@"SBBacklightLevel2"] floatValue] : 0.5) : [UIScreen mainScreen].brightness;
 	GSEventSetBacklightLevel(1.0);
 	UIWindow* window = [UIApplication sharedApplication].keyWindow;
    	flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
@@ -110,6 +113,12 @@ static void unflashScreen()
 {
 	reallyHasFlash = %orig;
 	return FrontFlashOn && onFlash ? YES : reallyHasFlash;
+}
+
+- (void)_setCameraMode:(int)mode cameraDevice:(int)device force:(BOOL)force
+{
+	isFrontCamera = device == 1 ? YES : NO;
+	%orig;
 }
 
 - (void)_setCameraMode:(int)mode cameraDevice:(int)device
@@ -211,12 +220,14 @@ static void unflashScreen()
 	%orig;
 	if (FrontFlashOn) {
 		declareFlashBtn()
-		if (self.cameraDevice == 1)
-			[flashBtn setAutoHidden:NO];
+		if (self.cameraDevice == 1) {
+			if (!isiOS4)
+				[flashBtn setAutoHidden:NO];
+		}
 	}
 }
 
-%group SC2iOS5
+%group SC2iOS45
 
 - (void)captureImage
 {
@@ -295,11 +306,11 @@ static void unflashScreen()
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	prefDict = [[NSDictionary alloc] initWithContentsOfFile:PREF_PATH];
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PreferencesChangedNotification), NULL, CFNotificationSuspensionBehaviorCoalesce);
-	if (kCFCoreFoundationVersionNumber >= 675.00 && kCFCoreFoundationVersionNumber < 793.00) {
+	if (kCFCoreFoundationVersionNumber >= 550.32 && kCFCoreFoundationVersionNumber < 793.00) {
 		void *openSC2 = dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY);
 		if (openSC2 != NULL)
-			%init(SC2iOS5);
+			%init(SC2iOS45);
 	}
 	%init();
-	[pool release];
+	[pool drain];
 }
