@@ -1,1 +1,1 @@
-{ Filter = { Bundles = ( "com.apple.camera", "com.apple.springboard", "com.apple.MobileSMS" ); }; }
+{ Filter = { Bundles = ( "com.apple.camera", "com.apple.springboard", "com.apple.MobileSMS", "com.bitesms" ); }; }
