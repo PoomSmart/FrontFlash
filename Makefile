@@ -6,7 +6,7 @@ export ARCHS = armv7 armv7s
 TWEAK_NAME = FrontFlash
 FrontFlash_FILES = FrontFlash.xm
 FrontFlash_FRAMEWORKS = UIKit
-FrontFlash_PRIVATE_FRAMEWORKS = GraphicsServices PhotoLibrary
+FrontFlash_PRIVATE_FRAMEWORKS = GraphicsServices
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
