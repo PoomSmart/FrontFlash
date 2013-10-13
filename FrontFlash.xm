@@ -40,6 +40,8 @@ static NSDictionary *prefDict = nil;
 
 @interface PLCameraController : NSObject
 @property(assign, nonatomic) int cameraDevice;
++ (id)sharedInstance;
+- (BOOL)isCapturingVideo;
 @end
 
 @interface PLCameraView
@@ -117,13 +119,13 @@ static void unflashScreen()
 
 - (void)_setCameraMode:(int)mode cameraDevice:(int)device force:(BOOL)force
 {
-	isFrontCamera = device == 1 ? YES : NO;
+	isFrontCamera = (device == 1);
 	%orig;
 }
 
 - (void)_setCameraMode:(int)mode cameraDevice:(int)device
 {
-	isFrontCamera = device == 1 ? YES : NO;
+	isFrontCamera = (device == 1);
 	%orig;
 }
 
@@ -132,13 +134,25 @@ static void unflashScreen()
 	%orig;
 	if (FrontFlashOn) {
 		if (self.cameraDevice == 1)
-			frontFlashActive = mode == 1 ? YES : NO;
+			frontFlashActive = (mode == 1);
 	}
 }
 
 %end
 
 %hook PLCameraFlashButton
+
+- (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
+{
+	if (FrontFlashOn) {
+		if ([[%c(PLCameraController) sharedInstance] isCapturingVideo] && mode == -1 && !reallyHasFlash && self.flashMode == 1) {
+			%orig(1, delegate);
+		}
+		else
+			%orig;
+	} else
+		%orig;
+}
 
 - (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
 {
