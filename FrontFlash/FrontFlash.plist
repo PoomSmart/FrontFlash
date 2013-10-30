@@ -19,10 +19,11 @@
         <key>cell</key>
         <string>PSGroupCell</string>
         <key>label</key>
-        <string></string>
+        <string>FrontFlash</string>
         <key>footerText</key>
         <string>FrontFlash will display a screen with user-defined color or color from Profiles when Flash Mode is set to On, in Front Camera and after you press shutter button, also providing a maximum light (brightness) from iDevice's screen to give you the best illumination. Useful in dark environment!
 Screen brightness will be returned to default value automatically after taking photo.
+No implementation for flash mode Auto with FrontFlash.
 
 By enabling "Enable in Video Mode" you will need Still Capture Enabler 2 installed for non-iPhone 5 iDevices to flash screen with still capture button.</string>
       </dict>
@@ -151,6 +152,26 @@ By enabling "Enable in Video Mode" you will need Still Capture Enabler 2 install
 			<false/>
 			<key>leftImage</key>
 			<string>b</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.PS.FrontFlash.prefs</string>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>defaults</key>
+			<string>com.PS.FrontFlash</string>
+			<key>key</key>
+			<string>Alpha</string>
+			<key>max</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.0</real>
+			<key>showValue</key>
+			<false/>
+			<key>leftImage</key>
+			<string>alpha</string>
 		</dict>
       <dict>
         <key>cell</key>
