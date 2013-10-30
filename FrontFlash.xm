@@ -3,7 +3,7 @@
 #define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
 #define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"
 #define Bool(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] boolValue] : YES)
-#define Color(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] floatValue] : 1.f)					
+#define FloatVal(key) ([prefDict objectForKey:key] ? [[prefDict objectForKey:key] floatValue] : 1.0f)					
 #define FrontFlashOnInPhoto Bool(@"FrontFlashOnInPhoto")
 #define FrontFlashOnInVideo Bool(@"FrontFlashOnInVideo")
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
@@ -12,7 +12,7 @@
 #define declareFlashBtn() \
 	PLCameraFlashButton *flashBtn = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
 	
-#define kDelayDuration 0.3
+#define kDelayDuration 0.22
 #define kFadeDuration 0.5
 
 static BOOL isFrontCamera;
@@ -61,23 +61,23 @@ static void flashScreen()
 	previousBacklightLevel = isiOS4 ? ((dict != nil) ? [[dict objectForKey:@"SBBacklightLevel2"] floatValue] : 0.5) : [UIScreen mainScreen].brightness;
 	GSEventSetBacklightLevel(1.0);
 	UIWindow* window = [UIApplication sharedApplication].keyWindow;
-   	flashView = [[UIView alloc] initWithFrame: CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
+   	flashView = [[UIView alloc] initWithFrame: CGRectMake(0.0f, 0.0f, window.frame.size.width, window.frame.size.height)];
    	[flashView setTag:9596];
     	switch ([[prefDict objectForKey:@"colorProfile"] intValue]) {
 		case 1:
-			flashView.backgroundColor = [UIColor whiteColor];
+			flashView.backgroundColor = [UIColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:FloatVal(@"Alpha")];
 			break;
 		case 2:
-			flashView.backgroundColor = [UIColor colorWithRed:255/255.0f green:252/255.0f blue:120/255.0f alpha:1.0f];
+			flashView.backgroundColor = [UIColor colorWithRed:255/255.0f green:252/255.0f blue:120/255.0f alpha:FloatVal(@"Alpha")];
 			break;
 		case 3:
-			flashView.backgroundColor = [UIColor colorWithRed:168/255.0f green:239/255.0f blue:255/255.0f alpha:1.0f];
+			flashView.backgroundColor = [UIColor colorWithRed:168/255.0f green:239/255.0f blue:255/255.0f alpha:FloatVal(@"Alpha")];
 			break;
 		case 4:
-			flashView.backgroundColor = [UIColor colorWithRed:Color(@"R") green:Color(@"G") blue:Color(@"B") alpha:1.0f];
+			flashView.backgroundColor = [UIColor colorWithRed:FloatVal(@"R") green:FloatVal(@"G") blue:FloatVal(@"B") alpha:FloatVal(@"Alpha")];
 			break;
 		default:
-			flashView.backgroundColor = [UIColor whiteColor];
+			flashView.backgroundColor = [UIColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:FloatVal(@"Alpha")];
 			break;
 	}
     [window addSubview:flashView];
@@ -145,9 +145,8 @@ static void unflashScreen()
 - (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
 {
 	if (FrontFlashOn) {
-		if ([[%c(PLCameraController) sharedInstance] isCapturingVideo] && mode == -1 && !reallyHasFlash && self.flashMode == 1) {
+		if ([[%c(PLCameraController) sharedInstance] isCapturingVideo] && mode == -1 && !reallyHasFlash && self.flashMode == 1)
 			%orig(1, delegate);
-		}
 		else
 			%orig;
 	} else
@@ -157,13 +156,12 @@ static void unflashScreen()
 - (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
 {
 	if (FrontFlashOn) {
-		if (mode == 0 && isFrontCamera) {
-			UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"FrontFlash" message:@"No implementation for Auto mode." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
-    		[alert show];
-    		[alert release];
+		if (mode == 0 && isFrontCamera)
 			%orig(-1, animated);
-		} else %orig;
-	} else %orig;
+		else
+			%orig;
+	} else
+		%orig;
 }
 
 %end
