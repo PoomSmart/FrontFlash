@@ -1,7 +1,7 @@
 Package: org.thebigboss.frontflash
 Name: FrontFlash
 Depends: mobilesubstrate, preferenceloader, gsc.front-facing-camera, firmware (>= 4.0)
-Version: 1.2
+Version: 1.3
 Architecture: iphoneos-arm
 Description: simulate Flash in Front-Facing Camera, even in iPad.
 Author: PoomSmart
