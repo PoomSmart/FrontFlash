@@ -1,70 +1,4 @@
-#import <UIKit/UIKit.h>
-
-#define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
-#define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"				
-#define isiOS4 (kCFCoreFoundationVersionNumber >= 550.32 && kCFCoreFoundationVersionNumber < 675.00)
-
-#define declareFlashBtn() \
-	PLCameraFlashButton *flashBtn = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
-	
-#define kDelayDuration 0.22
-#define kFadeDuration 0.5
-
-static BOOL FrontFlashOnInPhoto = YES;
-static BOOL FrontFlashOnInVideo = YES;
-#define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
-static BOOL isFrontCamera;
-static BOOL frontFlashActive;
-static BOOL onFlash = NO;
-static BOOL reallyHasFlash;
-
-static float previousBacklightLevel;
-static float alpha = 1.0f;
-static float red = 1.0f;
-static float green = 1.0f;
-static float blue = 1.0f;
-
-static int colorProfile = 1;
-
-static UIView *flashView = nil;
-
-@interface UIApplication (FrontFlash)
-- (void)setBacklightLevel:(float)level;
-@end
-
-@interface PLReorientingButton : UIButton
-@end
-
-@interface PLCameraFlashButton : PLReorientingButton
-@property(assign, nonatomic) int flashMode;
-@end
-
-@interface PLCameraFlashButton (iOS5Up)
-@property(assign, nonatomic, getter=isAutoHidden) BOOL autoHidden;
-@end
-
-@interface PLCameraController : NSObject
-@property(assign, nonatomic) int cameraDevice;
-+ (id)sharedInstance;
-- (BOOL)isCapturingVideo;
-@end
-
-@interface PLCameraView
-@property(assign, nonatomic) int cameraMode;
-@property(assign, nonatomic) int cameraDevice;
-@end
-
-static void FFLoader()
-{
-	NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:PREF_PATH];
-	FrontFlashOnInPhoto = [dict objectForKey:@"FrontFlashOnInPhoto"] ? [[dict objectForKey:@"FrontFlashOnInPhoto"] boolValue] : YES;
-	FrontFlashOnInVideo = [dict objectForKey:@"FrontFlashOnInVideo"] ? [[dict objectForKey:@"FrontFlashOnInVideo"] boolValue] : YES;
-	red = [dict objectForKey:@"R"] ? [[dict objectForKey:@"R"] floatValue] : 1.0f;
-	green = [dict objectForKey:@"G"] ? [[dict objectForKey:@"G"] floatValue] : 1.0f;
-	blue = [dict objectForKey:@"B"] ? [[dict objectForKey:@"B"] floatValue] : 1.0f;
-	alpha = [dict objectForKey:@"Alpha"] ? [[dict objectForKey:@"Alpha"] floatValue] : 1.0f;
-	colorProfile = [dict objectForKey:@"colorProfile"] ? [[dict objectForKey:@"colorProfile"] intValue] : 1;
-}
+#import "FrontFlash.h"
 
 static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
@@ -121,91 +55,26 @@ static void unflashScreen()
 
 %end
 
-%hook PLCameraController
-
-- (BOOL)hasFlash
-{
-	reallyHasFlash = %orig;
-	return FrontFlashOn && onFlash ? YES : reallyHasFlash;
-}
-
-- (void)_setCameraMode:(int)mode cameraDevice:(int)device force:(BOOL)force
-{
-	isFrontCamera = (device == 1);
-	%orig;
-}
-
-- (void)_setCameraMode:(int)mode cameraDevice:(int)device
-{
-	isFrontCamera = (device == 1);
-	%orig;
-}
-
-- (void)_setFlashMode:(int)mode force:(BOOL)arg2
-{
-	%orig;
-	if (FrontFlashOn) {
-		if (self.cameraDevice == 1)
-			frontFlashActive = (mode == 1);
-	}
-}
-
-%end
-
-%hook PLCameraFlashButton
-
-- (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
-{
-	if (FrontFlashOn) {
-		if ([[%c(PLCameraController) sharedInstance] isCapturingVideo] && mode == -1 && !reallyHasFlash && self.flashMode == 1)
-			%orig(1, delegate);
-		else
-			%orig;
-	} else
-		%orig;
-}
-
-- (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
-{
-	if (FrontFlashOn) {
-		if (mode == 0 && isFrontCamera)
-			%orig(-1, animated);
-		else
-			%orig;
-	} else
-		%orig;
-}
-
-%end
+%group iOS56
 
 %hook PLCameraView
 
-- (void)_postCaptureCleanup
+- (void)takePictureOpenIrisAnimationFinished
 {
-	%orig;
-	if (FrontFlashOn) {
-		declareFlashBtn()
-		if (self.cameraDevice == 1)
-			[flashBtn setHidden:NO];
-		else {
-			if (!reallyHasFlash)
-				[flashBtn setHidden:YES];
-		}
-	}
+    %orig;
+    if (FrontFlashOnInPhoto) {
+    	if (flashView != nil && isFrontCamera)
+   			unflashScreen();
+   	}
 }
 
-- (void)_commonPostVideoCaptureCleanup
+- (void)takePictureDuringVideoOpenIrisAnimationFinished
 {
-	%orig;
-	if (FrontFlashOn) {
-		declareFlashBtn()
-		if (self.cameraDevice == 1)
-			[flashBtn setHidden:NO];
-		else {
-			if (!reallyHasFlash)
-				[flashBtn setHidden:YES];
-		}
-	}
+    %orig;
+    if (FrontFlashOnInVideo) {
+    	if (flashView != nil && isFrontCamera)
+   			unflashScreen();
+   	}
 }
 
 - (void)cameraShutterClicked:(id)arg1
@@ -239,7 +108,102 @@ static void unflashScreen()
 	}
 }
 
-- (void)cameraControllerVideoCaptureDidStart:(id)arg1
+- (void)_postCaptureCleanup
+{
+	%orig;
+	if (FrontFlashOn) {
+		declareFlashBtn()
+		if (self.cameraDevice == 1)
+			[flashBtn setHidden:NO];
+		else {
+			if (!reallyHasFlash)
+				[flashBtn setHidden:YES];
+		}
+	}
+}
+
+- (void)_commonPostVideoCaptureCleanup
+{
+	%orig;
+	if (FrontFlashOn) {
+		declareFlashBtn()
+		if (self.cameraDevice == 1)
+			[flashBtn setHidden:NO];
+		else {
+			if (!reallyHasFlash)
+				[flashBtn setHidden:YES];
+		}
+	}
+}
+
+%end
+
+%hook PLCameraFlashButton
+
+- (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
+{
+	if (FrontFlashOn) {
+		if (isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1)
+			%orig(1, delegate);
+		else
+			%orig;
+	} else
+		%orig;
+}
+
+- (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
+{
+	if (FrontFlashOn) {
+		if (mode == 0 && isFrontCamera)
+			%orig(-1, animated);
+		else
+			%orig;
+	} else
+		%orig;
+}
+
+%end
+
+%end
+
+%hook PLCameraController
+
+- (BOOL)hasFlash
+{
+	reallyHasFlash = %orig;
+	return FrontFlashOn && onFlash ? YES : reallyHasFlash;
+}
+
+%group iOS4
+
+- (void)_setCameraMode:(int)mode cameraDevice:(int)device force:(BOOL)force
+{
+	isFrontCamera = (device == 1);
+	%orig;
+}
+
+%end
+
+- (void)_setCameraMode:(int)mode cameraDevice:(int)device
+{
+	isFrontCamera = (device == 1);
+	%orig;
+}
+
+- (void)_setFlashMode:(int)mode force:(BOOL)arg2
+{
+	%orig;
+	if (FrontFlashOn) {
+		if (self.cameraDevice == 1)
+			frontFlashActive = (mode == 1);
+	}
+}
+
+%end
+
+%hook PLCameraView
+
+- (void)cameraControllerVideoCaptureDidStart:(id)start
 {
 	%orig;
 	if (FrontFlashOn) {
@@ -262,24 +226,24 @@ static void unflashScreen()
 			[flashBtn setUserInteractionEnabled:YES];
 		}
 	}
-	if ((flashBtn.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
+	if ((((PLCameraFlashButton *)flashBtn).flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
 		flashScreen();
-    	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
-    		%orig;
-    		if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
-   			[UIView animateWithDuration:kFadeDuration delay:0.0 options:0
-                animations:^{
-    			flashView.alpha = 0.0f;
-                }
-        	completion:^(BOOL finished) {
-			[flashView removeFromSuperview];
-			flashView = nil;
-			[flashView release];
-			[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
-			GSEventSetBacklightLevel(previousBacklightLevel);
-        	}];
-    }
-    	});
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+			%orig;
+			if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
+				[UIView animateWithDuration:kFadeDuration delay:0.0 options:0
+					animations:^{
+						flashView.alpha = 0.0f;
+					}
+				completion:^(BOOL finished) {
+					[flashView removeFromSuperview];
+					flashView = nil;
+					[flashView release];
+					[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+					GSEventSetBacklightLevel(previousBacklightLevel);
+				}];
+			}
+		});
     } else %orig;
 }
 
@@ -297,31 +261,123 @@ static void unflashScreen()
 				[flashBtn setHidden:YES];
 		}
 	}
-	if ((flashBtn.flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
+	BOOL flashModeIsOn = isiOS7 ? (((CAMFlashButton *)flashBtn).flashMode == 1) : (((PLCameraFlashButton *)flashBtn).flashMode == 1);
+	if ((flashModeIsOn || frontFlashActive) && isFrontCamera && FrontFlashOn) {
 		flashScreen();
     	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
     		%orig;
+    		if (isiOS7) {
+    			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+					if (flashView != nil && isFrontCamera && FrontFlashOnInVideo) {
+						[UIView animateWithDuration:kFadeDuration delay:0.0 options:0
+							animations:^{
+								flashView.alpha = 0.0f;
+							}
+						completion:^(BOOL finished) {
+							[flashView removeFromSuperview];
+							flashView = nil;
+							[flashView release];
+							[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+							GSEventSetBacklightLevel(previousBacklightLevel);
+						}];
+					}
+				});
+    		}
     	});
     } else %orig;
 }
 
-- (void)takePictureOpenIrisAnimationFinished
+%end
+
+%group iOS7
+
+%hook CAMFlashButton
+
+- (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
 {
-    %orig;
-    if (FrontFlashOnInPhoto) {
-    	if (flashView != nil && isFrontCamera)
-   			unflashScreen();
-   	}
+	if (FrontFlashOn) {
+		if (isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1)
+			%orig(1, delegate);
+		else
+			%orig;
+	} else
+		%orig;
 }
 
-- (void)takePictureDuringVideoOpenIrisAnimationFinished
+- (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
 {
-    %orig;
-    if (FrontFlashOnInVideo) {
-    	if (flashView != nil && isFrontCamera)
-   			unflashScreen();
-   	}
+	if (FrontFlashOn) {
+		if (mode == 0 && isFrontCamera)
+			%orig(-1, animated);
+		else
+			%orig;
+	} else
+		%orig;
 }
+
+%end
+
+%hook CAMTopBar
+
+- (void)_updateHiddenViewsForButtonExpansionAnimated:(BOOL)animated
+{
+	%orig;
+	if (isCapturingVideo && isFrontCamera)
+		[self.flashButton pl_setHidden:NO animated:YES];
+}
+
+- (BOOL)_shouldHideFlashButton
+{
+	if (isCapturingVideo && isFrontCamera)
+		return NO;
+	return %orig;
+}
+
+- (void)_setFlashButtonExpanded:(BOOL)expand
+{
+	%orig;
+	if (isCapturingVideo && isFrontCamera)
+		[self.elapsedTimeView pl_setHidden:expand animated:YES];
+}
+
+%end
+
+%hook PLCameraView
+
+- (BOOL)_flashButtonShouldBeHidden
+{
+	if (FrontFlashOn && self.cameraDevice == 1)
+		return NO;
+	return %orig;
+}
+
+- (BOOL)_shouldHideFlashButtonForMode:(int)mode
+{
+	if (FrontFlashOn && self.cameraDevice == 1 && mode <= 1)
+		return NO;
+	return %orig;
+}
+
+- (BOOL)_shouldEnableFlashButton
+{
+	if (FrontFlashOn && self.cameraDevice == 1)
+		return YES;
+	return %orig;
+}
+
+- (void)_showControlsForCapturingVideoAnimated:(BOOL)animated
+{
+	%orig;
+	if (FrontFlashOn && self.cameraDevice == 1) {
+		declareFlashBtn()
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+			[self._topBar setStyle:0 animated:NO];
+			[flashBtn pl_setHidden:NO animated:YES];
+		});
+	}
+}
+
+%end
 
 %end
 
@@ -330,11 +386,17 @@ static void unflashScreen()
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PreferencesChangedNotification), NULL, CFNotificationSuspensionBehaviorCoalesce);
 	FFLoader();
-	if (kCFCoreFoundationVersionNumber >= 550.32 && kCFCoreFoundationVersionNumber < 793.00) {
+	if (isiOS4 || isiOS5) {
+		if (isiOS4)
+			%init(iOS4);
 		void *openSC2 = dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY);
 		if (openSC2 != NULL)
 			%init(SC2iOS45);
 	}
+	if (isiOS5 || isiOS6)
+		%init(iOS56);
+	if (isiOS7)
+		%init(iOS7);
 	%init();
 	[pool drain];
 }
