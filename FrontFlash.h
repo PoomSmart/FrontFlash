@@ -35,6 +35,10 @@
 @property(assign, nonatomic) int flashMode;
 @end
 
+@interface CAMTriStateButton : UIControl
+@property(assign, nonatomic) int flashMode;
+@end
+
 @interface CAMElapsedTimeView : UIView
 @end
 
@@ -58,6 +62,8 @@
 #define isiOS5 (kCFCoreFoundationVersionNumber >= 675.00 && kCFCoreFoundationVersionNumber < 793.00)
 #define isiOS6 (kCFCoreFoundationVersionNumber == 793.00)
 #define isiOS7 (kCFCoreFoundationVersionNumber > 793.00)
+#define isiOS70 (isiOS7 && kCFCoreFoundationVersionNumber <= 847.22)
+#define isiOS71 (kCFCoreFoundationVersionNumber >= 847.23)
 
 #define declareFlashBtn() \
 	id flashBtn; \
@@ -72,6 +78,7 @@
 static BOOL FrontFlashOnInPhoto = YES;
 static BOOL FrontFlashOnInVideo = YES;
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
+#define FrontFlashOnRecursively ((FrontFlashOnInPhoto && (self.cameraMode == 0 || self.cameraMode == 4)) || (FrontFlashOnInVideo && self.cameraMode == 1))
 static BOOL isFrontCamera;
 static BOOL frontFlashActive;
 static BOOL onFlash = NO;

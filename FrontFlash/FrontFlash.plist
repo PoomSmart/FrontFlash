@@ -23,9 +23,9 @@
         <key>footerText</key>
         <string>FrontFlash will display a screen with user-defined color or color from Profiles when Flash Mode is set to On, in Front Camera and after you press shutter button, also providing a maximum light (brightness) from iDevice's screen to give you the best illumination. Useful in dark environment!
 Screen brightness will be returned to default value automatically after taking photo.
-No implementation for flash mode Auto with FrontFlash.
+No implementation for flash Auto mode with FrontFlash.
 
-By enabling "Enable in Video Mode" you will need Still Capture Enabler 2 installed for non-iPhone 5 iDevices to flash screen with still capture button.</string>
+By enabling "Enable in Video Mode" you will need Still Capture Enabler 2 installed for non-4-inches-iPhone to flash screen with still capture button.</string>
       </dict>
       <dict>
         <key>cell</key>
