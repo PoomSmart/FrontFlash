@@ -1,5 +1,7 @@
 #import "FrontFlash.h"
 
+%config(generator=MobileSubstrate);
+
 static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
 	FFLoader();
@@ -396,10 +398,9 @@ static void unflashScreen()
 	%orig;
 	if (FrontFlashOnInVideo && self.cameraDevice == 1) {
 		declareFlashBtn()
-		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.3*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
-			[self._topBar setStyle:0 animated:NO];
-			[flashBtn pl_setHidden:NO animated:YES];
-		});
+		[self._topBar setStyle:0 animated:NO];
+		[self _updateTopBarStyleForDeviceOrientation:[[%c(PLCameraController) sharedInstance] cameraOrientation]];
+		[flashBtn pl_setHidden:NO animated:YES];
 	}
 }
 
@@ -422,13 +423,11 @@ static void unflashScreen()
 	if (isiOS5 || isiOS6) {
 		%init(iOS56);
 	}
-	if (isiOS7) {
-		if (isiOS70) {
-			%init(iOS70);
-		}
-		else if (isiOS71) {
-			%init(iOS71);
-		}
+	if (isiOS70) {
+		%init(iOS70);
+	}
+	else if (isiOS71) {
+		%init(iOS71);
 	}
 	%init();
 	[pool drain];

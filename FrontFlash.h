@@ -61,8 +61,8 @@
 #define isiOS4 (kCFCoreFoundationVersionNumber >= 550.32 && kCFCoreFoundationVersionNumber < 675.00)
 #define isiOS5 (kCFCoreFoundationVersionNumber >= 675.00 && kCFCoreFoundationVersionNumber < 793.00)
 #define isiOS6 (kCFCoreFoundationVersionNumber == 793.00)
-#define isiOS7 (kCFCoreFoundationVersionNumber > 793.00)
-#define isiOS70 (isiOS7 && kCFCoreFoundationVersionNumber <= 847.22)
+#define isiOS7 (kCFCoreFoundationVersionNumber >= 847.20)
+#define isiOS70 (isiOS7 && kCFCoreFoundationVersionNumber < 847.23)
 #define isiOS71 (kCFCoreFoundationVersionNumber >= 847.23)
 
 #define declareFlashBtn() \
