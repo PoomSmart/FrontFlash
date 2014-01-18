@@ -7,6 +7,7 @@
 // iOS 5+
 @interface PLCameraController : NSObject
 @property(assign, nonatomic) int cameraDevice;
+@property(readonly, assign, nonatomic) int cameraOrientation;
 + (id)sharedInstance;
 - (BOOL)isCapturingVideo;
 @end
@@ -42,14 +43,16 @@
 @interface CAMElapsedTimeView : UIView
 @end
 
-@interface CAMTopBar
+@interface CAMTopBar : UIView
 @property(retain, nonatomic) CAMFlashButton* flashButton;
 @property(retain, nonatomic) CAMElapsedTimeView* elapsedTimeView;
+- (void)setBackgroundStyle:(int)style animated:(BOOL)animated;
 - (void)setStyle:(int)style animated:(BOOL)animated;
 @end
 
 @interface PLCameraView (iOS7)
 @property(readonly, assign, nonatomic) CAMTopBar* _topBar;
+- (void)_updateTopBarStyleForDeviceOrientation:(int)orientation;
 @end
 
 @interface UIView (PhotoLibraryAdditions)
@@ -58,6 +61,7 @@
 
 #define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
 #define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"
+#define IPAD (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
 #define isiOS4 (kCFCoreFoundationVersionNumber >= 550.32 && kCFCoreFoundationVersionNumber < 675.00)
 #define isiOS5 (kCFCoreFoundationVersionNumber >= 675.00 && kCFCoreFoundationVersionNumber < 793.00)
 #define isiOS6 (kCFCoreFoundationVersionNumber == 793.00)

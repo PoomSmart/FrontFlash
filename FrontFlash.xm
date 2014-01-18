@@ -4,6 +4,7 @@
 
 static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
+	system("killall Camera");
 	FFLoader();
 }
 
@@ -83,15 +84,13 @@ static void unflashScreen()
 - (void)cameraShutterClicked:(id)arg1
 {
 	%orig;
-	if (FrontFlashOn) {
-		declareFlashBtn()
-		if (self.cameraDevice == 1) {
-			[flashBtn setHidden:NO];
-			[flashBtn setUserInteractionEnabled:YES];
-		} else {
-			if (!reallyHasFlash)
-				[flashBtn setHidden:YES];
-		}
+	declareFlashBtn()
+	if (self.cameraDevice == 1) {
+		[flashBtn setHidden:NO];
+		[flashBtn setUserInteractionEnabled:YES];
+	} else {
+		if (!reallyHasFlash)
+			[flashBtn setHidden:YES];
 	}
 }
 
@@ -100,42 +99,36 @@ static void unflashScreen()
 	onFlash = YES;
 	%orig;
 	onFlash = NO;
-	if (FrontFlashOn) {
-		declareFlashBtn()
-		if (self.cameraDevice == 1)
-			[flashBtn setHidden:NO];
-		else {
-			if (!reallyHasFlash)
-				[flashBtn setHidden:YES];
-		}
+	declareFlashBtn()
+	if (self.cameraDevice == 1)
+		[flashBtn setHidden:NO];
+	else {
+		if (!reallyHasFlash)
+			[flashBtn setHidden:YES];
 	}
 }
 
 - (void)_postCaptureCleanup
 {
 	%orig;
-	if (FrontFlashOn) {
-		declareFlashBtn()
-		if (self.cameraDevice == 1)
-			[flashBtn setHidden:NO];
-		else {
-			if (!reallyHasFlash)
-				[flashBtn setHidden:YES];
-		}
+	declareFlashBtn()
+	if (self.cameraDevice == 1)
+		[flashBtn setHidden:NO];
+	else {
+		if (!reallyHasFlash)
+			[flashBtn setHidden:YES];
 	}
 }
 
 - (void)_commonPostVideoCaptureCleanup
 {
 	%orig;
-	if (FrontFlashOn) {
-		declareFlashBtn()
-		if (self.cameraDevice == 1)
-			[flashBtn setHidden:NO];
-		else {
-			if (!reallyHasFlash)
-				[flashBtn setHidden:YES];
-		}
+	declareFlashBtn()
+	if (self.cameraDevice == 1)
+		[flashBtn setHidden:NO];
+	else {
+		if (!reallyHasFlash)
+			[flashBtn setHidden:YES];
 	}
 }
 
@@ -145,23 +138,17 @@ static void unflashScreen()
 
 - (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
 {
-	if (FrontFlashOn) {
-		if (isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1)
-			%orig(1, delegate);
-		else
-			%orig;
-	} else
+	if (isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1)
+		%orig(1, delegate);
+	else
 		%orig;
 }
 
 - (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
 {
-	if (FrontFlashOn) {
-		if (mode == 0 && isFrontCamera)
-			%orig(-1, animated);
-		else
-			%orig;
-	} else
+	if (mode == 0 && isFrontCamera)
+		%orig(-1, animated);
+	else
 		%orig;
 }
 
@@ -174,7 +161,7 @@ static void unflashScreen()
 - (BOOL)hasFlash
 {
 	reallyHasFlash = %orig;
-	return FrontFlashOn && onFlash ? YES : reallyHasFlash;
+	return onFlash ? YES : reallyHasFlash;
 }
 
 %group iOS4
@@ -196,25 +183,28 @@ static void unflashScreen()
 - (void)_setFlashMode:(int)mode force:(BOOL)arg2
 {
 	%orig;
-	if (FrontFlashOn) {
-		if (self.cameraDevice == 1)
-			frontFlashActive = (mode == 1);
-	}
+	if (self.cameraDevice == 1)
+		frontFlashActive = (mode == 1);
 }
 
 %end
 
 %hook PLCameraView
 
+- (BOOL)_flashButtonShouldBeHidden
+{
+	if (FrontFlashOnRecursively && self.cameraDevice == 1)
+		return NO;
+	return %orig;
+}
+
 - (void)cameraControllerVideoCaptureDidStart:(id)start
 {
 	%orig;
-	if (FrontFlashOn) {
-		declareFlashBtn()
-		if (self.cameraDevice == 1) {
-			if (!isiOS4)
-				[flashBtn setAutoHidden:NO];
-		}
+	declareFlashBtn()
+	if (self.cameraDevice == 1) {
+		if (!isiOS4)
+			[flashBtn setAutoHidden:NO];
 	}
 }
 
@@ -229,7 +219,7 @@ static void unflashScreen()
 			[flashBtn setUserInteractionEnabled:YES];
 		}
 	}
-	if ((((PLCameraFlashButton *)flashBtn).flashMode == 1 || frontFlashActive) && isFrontCamera && FrontFlashOn) {
+	if ((((PLCameraFlashButton *)flashBtn).flashMode == 1 || frontFlashActive) && isFrontCamera) {
 		flashScreen();
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
 			%orig;
@@ -255,17 +245,15 @@ static void unflashScreen()
 - (void)_shutterButtonClicked
 {
 	declareFlashBtn()
-	if (FrontFlashOn) {
-		if (self.cameraDevice == 1) {
-			[flashBtn setHidden:NO];
-			[flashBtn setUserInteractionEnabled:YES];
-		} else {
-			if (!reallyHasFlash)
-				[flashBtn setHidden:YES];
-		}
+	if (self.cameraDevice == 1) {
+		[flashBtn setHidden:NO];
+		[flashBtn setUserInteractionEnabled:YES];
+	} else {
+		if (!reallyHasFlash)
+			[flashBtn setHidden:YES];
 	}
 	BOOL flashModeIsOn = isiOS7 ? (((CAMFlashButton *)flashBtn).flashMode == 1) : (((PLCameraFlashButton *)flashBtn).flashMode == 1);
-	if ((flashModeIsOn || frontFlashActive) && isFrontCamera && FrontFlashOn) {
+	if ((flashModeIsOn || frontFlashActive) && isFrontCamera) {
 		flashScreen();
     	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
     		%orig;
@@ -298,57 +286,19 @@ static void unflashScreen()
 
 - (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
 {
-	if (FrontFlashOn) {
-		if (mode == 0 && isFrontCamera)
-			%orig(-1, animated);
-		else
-			%orig;
-	} else
+	if (mode == 0 && isFrontCamera)
+		%orig(-1, animated);
+	else
 		%orig;
 }
 
 - (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
 {
-	if (FrontFlashOn) {
-		if (isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1)
-			%orig(1, delegate);
-		else
-			%orig;
-	} else
+	if (isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1)
+		%orig(1, delegate);
+	else
 		%orig;
 }
-
-%end
-
-%end
-
-%group iOS70
-
-%hook CAMFlashButton
-
-- (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
-{
-	if (FrontFlashOn) {
-		if (mode == 0 && isFrontCamera)
-			%orig(-1, animated);
-		else
-			%orig;
-	} else
-		%orig;
-}
-
-- (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
-{
-	if (FrontFlashOn) {
-		if (isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1)
-			%orig(1, delegate);
-		else
-			%orig;
-	} else
-		%orig;
-}
-
-%end
 
 %end
 
@@ -361,6 +311,38 @@ static void unflashScreen()
 		[self.flashButton pl_setHidden:NO animated:YES];
 }
 
+%end
+
+%end
+
+%group iOS70
+
+%hook CAMFlashButton
+
+- (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
+{
+	if (mode == 0 && isFrontCamera)
+		%orig(-1, animated);
+	else
+		%orig;
+}
+
+- (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
+{
+	if (isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1)
+		%orig(1, delegate);
+	else
+		%orig;
+}
+
+%end
+
+%end
+
+%group iOS7
+
+%hook CAMTopBar
+
 - (void)_setFlashButtonExpanded:(BOOL)expand
 {
 	%orig;
@@ -372,11 +354,11 @@ static void unflashScreen()
 
 %hook PLCameraView
 
-- (BOOL)_flashButtonShouldBeHidden
+- (void)_createDefaultControlsIfNecessary
 {
-	if (FrontFlashOnRecursively && self.cameraDevice == 1)
-		return NO;
-	return %orig;
+	onFlash = YES;
+	%orig;
+	onFlash = NO;
 }
 
 - (BOOL)_shouldHideFlashButtonForMode:(int)mode
@@ -398,11 +380,77 @@ static void unflashScreen()
 	%orig;
 	if (FrontFlashOnInVideo && self.cameraDevice == 1) {
 		declareFlashBtn()
-		[self._topBar setStyle:0 animated:NO];
-		[self _updateTopBarStyleForDeviceOrientation:[[%c(PLCameraController) sharedInstance] cameraOrientation]];
-		[flashBtn pl_setHidden:NO animated:YES];
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (isiOS70 ? 0.5 : 0)*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+			[self._topBar setStyle:0 animated:NO];
+			[self _updateTopBarStyleForDeviceOrientation:[[%c(PLCameraController) sharedInstance] cameraOrientation]];
+			[flashBtn pl_setHidden:NO animated:YES];
+		});
 	}
 }
+
+%end
+
+%end
+
+%group iOS7iPad
+
+static BOOL hook = NO;
+static BOOL hook2 = NO; 
+
+%hook CAMPadApplicationSpec
+
+- (BOOL)shouldCreateTopBar
+{
+	return YES;
+}
+
+- (BOOL)shouldCreateFlashButton
+{
+	return YES;
+}
+
+%end
+
+%hook CAMTopBar
+
+- (CGSize)sizeThatFits:(CGSize)size
+{
+	return CGSizeMake(190, 40);
+}
+
+%end
+
+%hook CAMCameraSpec
+
+- (BOOL)isPad
+{
+	return hook ? NO : YES;
+}
+- (BOOL)isPhone
+{
+	return hook2 ? YES : NO;
+}
+
+%end
+
+%hook PLCameraView
+
+- (void)_createFlashButtonIfNecessary
+{
+	hook2 = YES;
+	%orig;
+	hook2 = NO;
+}
+
+- (void)_applyTopBarRotationForDeviceOrientation:(int)orientation
+{
+	hook = YES;
+	%orig;
+	hook = NO;
+	[self._topBar pl_setHidden:!(self.cameraDevice == 1) animated:YES];
+}
+
+%end
 
 %end
 
@@ -411,24 +459,32 @@ static void unflashScreen()
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PreferencesChangedNotification), NULL, CFNotificationSuspensionBehaviorCoalesce);
 	FFLoader();
-	if (isiOS4 || isiOS5) {
-		if (isiOS4) {
-			%init(iOS4);
+	if (FrontFlashOn) {
+		if (isiOS4 || isiOS5) {
+			if (isiOS4) {
+				%init(iOS4);
+			}
+			void *openSC2 = dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY);
+			if (openSC2 != NULL) {
+				%init(SC2iOS45);
+			}
 		}
-		void *openSC2 = dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY);
-		if (openSC2 != NULL) {
-			%init(SC2iOS45);
+		if (isiOS5 || isiOS6) {
+			%init(iOS56);
 		}
+		if (isiOS7) {
+			%init(iOS7);
+			if (IPAD) {
+				%init(iOS7iPad);
+			}
+			if (isiOS70) {
+				%init(iOS70);
+			}
+			else if (isiOS71) {
+				%init(iOS71);
+			}
+		}
+		%init();
 	}
-	if (isiOS5 || isiOS6) {
-		%init(iOS56);
-	}
-	if (isiOS70) {
-		%init(iOS70);
-	}
-	else if (isiOS71) {
-		%init(iOS71);
-	}
-	%init();
 	[pool drain];
 }
