@@ -4,7 +4,7 @@ ARCHS = armv7 armv7s arm64
 
 include theos/makefiles/common.mk
 TWEAK_NAME = FrontFlash
-FrontFlash_FILES = FrontFlash.xm
+FrontFlash_FILES = Tweak.xm
 FrontFlash_FRAMEWORKS = UIKit
 FrontFlash_PRIVATE_FRAMEWORKS = GraphicsServices
 

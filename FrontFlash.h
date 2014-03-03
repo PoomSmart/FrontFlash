@@ -76,8 +76,8 @@
 	else \
 		flashBtn = MSHookIvar<PLCameraFlashButton *>(self, "_flashButton");
 	
-#define kDelayDuration 0.22
-#define kFadeDuration 0.5
+#define kDelayDuration .22
+#define kFadeDuration .35
 
 static BOOL FrontFlashOnInPhoto = YES;
 static BOOL FrontFlashOnInVideo = YES;
@@ -89,10 +89,10 @@ static BOOL onFlash = NO;
 static BOOL reallyHasFlash;
 
 static float previousBacklightLevel;
-static float alpha = 1.0f;
-static float red = 1.0f;
-static float green = 1.0f;
-static float blue = 1.0f;
+static float alpha = 1;
+static float red = 1;
+static float green = 1;
+static float blue = 1;
 
 static int colorProfile = 1;
 
@@ -103,9 +103,9 @@ static void FFLoader()
 	NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:PREF_PATH];
 	FrontFlashOnInPhoto = [dict objectForKey:@"FrontFlashOnInPhoto"] ? [[dict objectForKey:@"FrontFlashOnInPhoto"] boolValue] : YES;
 	FrontFlashOnInVideo = [dict objectForKey:@"FrontFlashOnInVideo"] ? [[dict objectForKey:@"FrontFlashOnInVideo"] boolValue] : YES;
-	red = [dict objectForKey:@"R"] ? [[dict objectForKey:@"R"] floatValue] : 1.0f;
-	green = [dict objectForKey:@"G"] ? [[dict objectForKey:@"G"] floatValue] : 1.0f;
-	blue = [dict objectForKey:@"B"] ? [[dict objectForKey:@"B"] floatValue] : 1.0f;
-	alpha = [dict objectForKey:@"Alpha"] ? [[dict objectForKey:@"Alpha"] floatValue] : 1.0f;
+	red = [dict objectForKey:@"R"] ? [[dict objectForKey:@"R"] floatValue] : 1;
+	green = [dict objectForKey:@"G"] ? [[dict objectForKey:@"G"] floatValue] : 1;
+	blue = [dict objectForKey:@"B"] ? [[dict objectForKey:@"B"] floatValue] : 1;
+	alpha = [dict objectForKey:@"Alpha"] ? [[dict objectForKey:@"Alpha"] floatValue] : 1;
 	colorProfile = [dict objectForKey:@"colorProfile"] ? [[dict objectForKey:@"colorProfile"] intValue] : 1;
 }
