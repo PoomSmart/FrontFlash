@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import <GraphicsServices/GSEvent.h>
 
 @interface UIApplication (FrontFlash)
 - (void)setBacklightLevel:(float)level;
@@ -51,7 +52,7 @@
 @end
 
 @interface PLCameraView (iOS7)
-@property(readonly, assign, nonatomic) CAMTopBar* _topBar;
+@property(readonly, assign, nonatomic) CAMTopBar *_topBar;
 - (void)_updateTopBarStyleForDeviceOrientation:(int)orientation;
 @end
 
