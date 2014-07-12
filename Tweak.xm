@@ -13,7 +13,7 @@ static void flashScreen()
 	GSEventSetBacklightLevel(1.0);
 	UIWindow *window = [UIApplication sharedApplication].keyWindow;
    	flashView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, window.frame.size.width, window.frame.size.height)];
-   	[flashView setTag:9596];
+   	flashView.tag = 9596;
 	switch (colorProfile) {
 	case 1:
 		flashView.backgroundColor = [UIColor colorWithRed:1 green:1 blue:1 alpha:1];
@@ -33,23 +33,27 @@ static void flashScreen()
 
 static void unflashScreen()
 {
-	[UIView animateWithDuration:kFadeDuration delay:0 options:0
-		animations:^{
-			if (flashView != nil)
-				flashView.alpha = 0;
-		}
-		completion:^(BOOL finished) {
-			if (finished) {
-				if (flashView != nil) {
-					[flashView removeFromSuperview];
-					flashView = nil;
-					[flashView release];
+	UIWindow *window = [UIApplication sharedApplication].keyWindow;
+	for (UIView *view in window.subviews) {
+		if (view.tag == 9596) {
+			[UIView animateWithDuration:kFadeDuration delay:0 options:0
+				animations:^{
+					if (view != nil)
+						view.alpha = 0;
 				}
-				[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
-				GSEventSetBacklightLevel(previousBacklightLevel);
-			}
+				completion:^(BOOL finished) {
+					if (finished) {
+						if (view != nil) {
+							[view removeFromSuperview];
+							[view release];
+						}
+						[[UIApplication sharedApplication] setBacklightLevel:previousBacklightLevel];
+						GSEventSetBacklightLevel(previousBacklightLevel);
+					}
+				}
+			];
 		}
-	];
+	}
 }
 
 
@@ -207,7 +211,7 @@ static void unflashScreen()
 
 %group SC2iOS45
 
-- (void)captureImage
+- (void)sc2_captureImage
 {
 	declareFlashBtn()
 	if (FrontFlashOnInVideo) {
@@ -246,7 +250,7 @@ static void unflashScreen()
 			%orig;
 			if (isiOS7) {
 				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
-					if (isFrontCamera && FrontFlashOnInVideo)
+					if (isFrontCamera)
 						unflashScreen();
 				});
 			}
@@ -258,20 +262,6 @@ static void unflashScreen()
 %end
 
 %group iOS71
-
-%hook CAMTriStateButton
-
-- (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
-{
-	%orig(mode == 0 && isFrontCamera ? -1 : mode, animated);
-}
-
-- (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
-{
-	%orig(isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1 ? 1 : mode, delegate);
-}
-
-%end
 
 %hook CAMTopBar
 
@@ -290,14 +280,14 @@ static void unflashScreen()
 
 %hook CAMFlashButton
 
-- (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
-{
-	%orig(mode == 0 && isFrontCamera ? -1 : mode, animated);
-}
-
 - (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
 {
-	%orig(isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1 ? 1 : mode, delegate);
+	int flashMode = mode;
+	if (isCapturingVideo && mode == -1 && !reallyHasFlash && self.flashMode == 1)
+		flashMode = 1;
+	else if (mode == 0 && isFrontCamera)
+		flashMode = -1;
+	%orig(flashMode, delegate);
 }
 
 %end
@@ -347,7 +337,7 @@ static void unflashScreen()
 		[self._topBar setStyle:0 animated:NO];
 		[self _updateTopBarStyleForDeviceOrientation:[[%c(PLCameraController) sharedInstance] cameraOrientation]];
 		declareFlashBtn()
-		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (isiOS70 ? .3 : 0)*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (isiOS70 ? .2 : 0)*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
 			[flashBtn pl_setHidden:NO animated:YES];
 		});
 	}
@@ -451,8 +441,7 @@ static BOOL hook2 = NO;
 		if (isiOS4) {
 			%init(iOS4);
 		}
-		void *openSC2 = dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY);
-		if (openSC2 != NULL) {
+		if (dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY | RTLD_NOLOAD) != NULL) {
 			%init(SC2iOS45);
 		}
 	}
