@@ -1,0 +1,10 @@
+{
+	entry = {
+		bundle = "FrontFlashSettings";
+		cell = PSLinkCell;
+		detail = "FrontFlashPreferenceController";
+		icon = "FrontFlash.png";
+		isController = 1;
+		label = "FrontFlash";
+	};
+}

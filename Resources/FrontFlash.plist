@@ -23,9 +23,7 @@
         <key>footerText</key>
         <string>FrontFlash will display a screen with user-defined color or color from Profiles when Flash Mode is set to On, in Front Camera and after you press shutter button, also providing a maximum light (brightness) from iDevice's screen to give you the best illumination. Useful in dark environment!
 Screen brightness will be returned to default value automatically after taking photo.
-No implementation for flash Auto mode with FrontFlash.
-
-By enabling "Enable in Video Mode" you will need Still Capture Enabler 2 installed for non-4-inches-iPhone to flash screen with still capture button.</string>
+No implementation for flash Auto mode with FrontFlash.</string>
       </dict>
       <dict>
         <key>cell</key>
@@ -94,66 +92,16 @@ By enabling "Enable in Video Mode" you will need Still Capture Enabler 2 install
         <string></string>
       </dict>
       <dict>
-			<key>PostNotification</key>
-			<string>com.PS.FrontFlash.prefs</string>
-			<key>cell</key>
-			<string>PSSliderCell</string>
-			<key>default</key>
-			<real>1.0</real>
-			<key>defaults</key>
-			<string>com.PS.FrontFlash</string>
-			<key>key</key>
-			<string>R</string>
-			<key>max</key>
-			<real>1.0</real>
-			<key>min</key>
-			<real>0.0</real>
-			<key>showValue</key>
-			<false/>
-			<key>leftImage</key>
-			<string>r</string>
-		</dict>
-		<dict>
-			<key>PostNotification</key>
-			<string>com.PS.FrontFlash.prefs</string>
-			<key>cell</key>
-			<string>PSSliderCell</string>
-			<key>default</key>
-			<real>1.0</real>
-			<key>defaults</key>
-			<string>com.PS.FrontFlash</string>
-			<key>key</key>
-			<string>G</string>
-			<key>max</key>
-			<real>1.0</real>
-			<key>min</key>
-			<real>0.0</real>
-			<key>showValue</key>
-			<false/>
-			<key>leftImage</key>
-			<string>g</string>
-		</dict>
-		<dict>
-			<key>PostNotification</key>
-			<string>com.PS.FrontFlash.prefs</string>
-			<key>cell</key>
-			<string>PSSliderCell</string>
-			<key>default</key>
-			<real>1.0</real>
-			<key>defaults</key>
-			<string>com.PS.FrontFlash</string>
-			<key>key</key>
-			<string>B</string>
-			<key>max</key>
-			<real>1.0</real>
-			<key>min</key>
-			<real>0.0</real>
-			<key>showValue</key>
-			<false/>
-			<key>leftImage</key>
-			<string>b</string>
-		</dict>
-		<dict>
+            <key>cell</key>
+            <string>PSButtonCell</string>
+            <key>label</key>
+            <string>Select Color</string>
+           <key>action</key>
+           <string>showColorPicker:</string>
+           <key>alignment</key>
+           <integer>1</integer>
+        </dict>
+        <dict>
 			<key>PostNotification</key>
 			<string>com.PS.FrontFlash.prefs</string>
 			<key>cell</key>
@@ -170,12 +118,12 @@ By enabling "Enable in Video Mode" you will need Still Capture Enabler 2 install
 			<real>0.0</real>
 			<key>showValue</key>
 			<false/>
-			<key>leftImage</key>
-			<string>alpha</string>
 		</dict>
       <dict>
         <key>cell</key>
         <string>PSGroupCell</string>
+        <key>footerAlignment</key>
+        <integer>1</integer>
         <key>footerText</key>
         <string>© 2013 - 2014 Thuchapol Unprasert
 (@PoomSmart)</string>
