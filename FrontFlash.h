@@ -40,6 +40,7 @@
 @property(assign, nonatomic) int cameraDevice;
 @property(readonly, assign, nonatomic) CAMTopBar *_topBar;
 @property(retain, nonatomic) UIToolbar *bottomButtonBar;
+- (BOOL)_isStillImageMode:(int)cameraMode;
 - (void)_updateTopBarStyleForDeviceOrientation:(int)orientation;
 @end
 
@@ -47,6 +48,7 @@
 @property(assign, nonatomic) int cameraMode;
 @property(assign, nonatomic) int cameraDevice;
 @property(readonly, assign, nonatomic) CAMTopBar *_topBar;
+- (BOOL)_isStillImageMode:(int)cameraMode;
 - (void)_updateTopBarStyleForDeviceOrientation:(int)orientation;
 @end
 
@@ -83,5 +85,14 @@
 - (void)pl_setHidden:(BOOL)hidden animated:(BOOL)animated;
 @end
 
+@interface UIApplication (Addition)
+- (BOOL)isSuspended;
+@end
+
+@interface SBScreenFlash : NSObject
++ (SBScreenFlash *)sharedInstance;
+- (void)flashColor:(UIColor *)color;
+@end
+
 #define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
-#define PREF_PATH @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist"
+NSString *const PREF_PATH = @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist";
