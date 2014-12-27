@@ -65,6 +65,7 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 @property (nonatomic, strong) NKOBrightnessView *gradientView;
 @property (nonatomic, strong) UIImageView *brightnessIndicator;
 @property (nonatomic, strong) UIImageView *hueSatImage;
+@property (nonatomic, strong) UIView *overlayView;
 @property (nonatomic, strong) UIView *crossHairs;
 
 @end
@@ -105,6 +106,7 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
     [self _updateBrightnessPosition];
     [self _updateGradientColor];
     [self _updateCrosshairPosition];
+    self.crossHairs.layer.backgroundColor = _color.CGColor;
 }
 
 - (void)layoutSubviews
@@ -137,19 +139,20 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 {
     CGFloat hue, saturation;
     [newColor getHue:&hue saturation:&saturation brightness:nil alpha:nil];
-
     currentHue = hue;
     currentSaturation = saturation;
     [self _setColor:newColor];
     [self _updateGradientColor];
     [self _updateBrightnessPosition];
     [self _updateCrosshairPosition];
+    self.crossHairs.layer.backgroundColor = newColor.CGColor;
 }
 
 #pragma mark - Private methods
 - (void)_setColor:(UIColor *)newColor
 {
     if (![_color isEqual:newColor]){
+    	self.crossHairs.layer.backgroundColor = newColor.CGColor;
         CGFloat brightness;
         [newColor getHue:NULL saturation:NULL brightness:&brightness alpha:NULL];
         CGColorSpaceModel colorSpaceModel = CGColorSpaceGetModel(CGColorGetColorSpace(newColor.CGColor));
@@ -177,7 +180,7 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
     CGPoint brightnessPosition;
     brightnessPosition.x = (1.0-currentBrightness)*self.gradientView.frame.size.width + self.gradientView.frame.origin.x;
     brightnessPosition.y = self.gradientView.center.y;
-    
+    self.overlayView.alpha = 1.0-currentBrightness;
     self.brightnessIndicator.center = brightnessPosition;
 }
 
@@ -189,6 +192,7 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
     hueSatPosition.y = (1.0-currentSaturation) * self.hueSatImage.frame.size.height + self.hueSatImage.frame.origin.y;
     
     self.crossHairs.center = hueSatPosition;
+    self.crossHairs.layer.backgroundColor = _color.CGColor;
     [self _updateGradientColor];
 }
 
@@ -199,7 +203,6 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
                                         brightness:1.0
                                              alpha:1.0];
 	
-    self.crossHairs.layer.backgroundColor = gradientColor.CGColor;
     
 	[self.gradientView setColor:gradientColor];
 }
@@ -228,7 +231,7 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 - (void)_updateBrightnessWithMovement:(CGPoint)position
 {
 	currentBrightness = 1.0 - ((position.x - self.gradientView.frame.origin.x)/self.gradientView.frame.size.width) ;
-	
+	self.overlayView.alpha = 1.0-currentBrightness;
 	UIColor *_tcolor = [UIColor colorWithHue:currentHue
                                   saturation:currentSaturation
                                   brightness:currentBrightness
@@ -314,8 +317,19 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
         self->_hueSatImage.layer.masksToBounds = YES;
     }
     
+    if (self->_overlayView == nil) {
+    	self->_overlayView = [[UIView alloc] initWithFrame:self->_hueSatImage.frame];
+    	self->_overlayView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    	self->_overlayView.layer.cornerRadius = 6.f;
+    	self->_overlayView.backgroundColor = [UIColor blackColor];
+    	self->_overlayView.alpha = 1;
+    }
+    
     if (self->_hueSatImage.superview == nil){
         [self addSubview:self->_hueSatImage];
+    }
+    if (self->_overlayView.superview == nil){
+        [self insertSubview:self->_overlayView aboveSubview:self->_hueSatImage];
     }
     
     return self->_hueSatImage;
@@ -343,7 +357,7 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
     }
     
     if (self->_crossHairs.superview == nil){
-        [self insertSubview:self->_crossHairs aboveSubview:self.hueSatImage];
+        [self insertSubview:self->_crossHairs aboveSubview:self.overlayView];
     }
     
     return self->_crossHairs;

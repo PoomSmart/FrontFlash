@@ -175,8 +175,7 @@ static void handleFlashButton()
 - (void)_setFlashMode:(int)mode force:(BOOL)arg2
 {
 	%orig;
-	if (cameraDevice() == 1)
-		frontFlashActive = (mode == 1);
+	frontFlashActive = (mode == 1);
 }
 
 - (void)captureOutput:(id)arg1 didStartRecordingToOutputFileAtURL:(id)arg2 fromConnections:(id)arg3
@@ -318,23 +317,45 @@ static void handleFlashButton()
 	}
 }
 
-- (void)cameraShutterReleased:(id)arg1
+%new
+- (BOOL)shouldFlashTheScreen
 {
-	if (isFrontCamera && [self _isStillImageMode:[self cameraMode]] && ![[UIApplication sharedApplication] isSuspended] && ![cameraInstance() performingTimedCapture] && !fromCT2) {
-		BOOL flashModeIsOn = (((CAMFlashButton *)flashBtn()).flashMode == 1);
-		if (flashModeIsOn || frontFlashActive) {
-			flashScreen();
-			dispatch_queue_t delayCaptureQueue = dispatch_queue_create(delayCaptureQueueKey, NULL);
-			dispatch_async(delayCaptureQueue, ^{
-				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), delayCaptureQueue, ^(void){
-					%orig;
-				});
+	int cameraMode = [self cameraMode];
+	BOOL isStillImageMode = cameraMode == 0 || cameraMode == 4;
+	BOOL isFrontCamera = [self cameraDevice] == 1;
+	BOOL isNotSuspended = ![[UIApplication sharedApplication] isSuspended];
+	BOOL isNotInBurstMode = NO;
+	if ([cameraInstance() respondsToSelector:@selector(performingTimedCapture)])
+		isNotInBurstMode = ![cameraInstance() performingTimedCapture];
+	else if ([cameraInstance() respondsToSelector:@selector(performingAvalancheCapture)])
+		isNotInBurstMode = ![cameraInstance() performingAvalancheCapture];
+	BOOL flashModeIsOn = (((CAMFlashButton *)flashBtn()).flashMode == 1);
+	BOOL controllerFlashModeIsOn = frontFlashActive;
+	return (isStillImageMode && isFrontCamera && isNotSuspended && isNotInBurstMode) && (flashModeIsOn || controllerFlashModeIsOn);
+}
+
+- (void)_createShutterButtonIfNecessary
+{
+	%orig;
+	CAMShutterButton *shutterButton = [MSHookIvar<CAMBottomBar *>(self, "__bottomBar") shutterButton];
+	[shutterButton removeTarget:self action:@selector(cameraShutterReleased:) forControlEvents:UIControlEventTouchUpInside];
+	[shutterButton addTarget:self action:@selector(frontflash_cameraShutterReleased:) forControlEvents:UIControlEventTouchUpInside];
+}
+
+%new
+- (void)frontflash_cameraShutterReleased:(CAMShutterButton *)button
+{
+	if ([self shouldFlashTheScreen]) {
+		flashScreen();
+		dispatch_queue_t delayCaptureQueue = dispatch_queue_create(delayCaptureQueueKey, NULL);
+		dispatch_async(delayCaptureQueue, ^{
+			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), delayCaptureQueue, ^(void){
+				[self cameraShutterReleased:button];
 			});
-			dispatch_release(delayCaptureQueue);
-		} else
-			%orig;
+		});
+		dispatch_release(delayCaptureQueue);
 	} else
-		%orig;
+		[self cameraShutterReleased:button];
 }
 
 %end
@@ -498,7 +519,10 @@ static void VOID(FlashScreen)
 			flashColor = [UIColor colorWithHue:hue saturation:sat brightness:bri alpha:alpha];
 			break;
 	}
-	[[%c(SBScreenFlash) sharedInstance] flashColor:flashColor];
+	if (isiOS8Up)
+		[[%c(SBScreenFlash) mainScreenFlasher] flashColor:flashColor withCompletion:nil];
+	else
+		[[%c(SBScreenFlash) sharedInstance] flashColor:flashColor];
 	NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/com.apple.springboard.plist"];
 	float previousBacklightLevel = dict ? [dict[@"SBBacklightLevel2"] floatValue] : .5;
 	dispatch_queue_t delayReleaseQueue = dispatch_queue_create("com.PS.FrontFlash.delayRelease", NULL);
@@ -512,7 +536,7 @@ static void VOID(FlashScreen)
 
 %ctor {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PreferencesChangedNotification), NULL, CFNotificationSuspensionBehaviorCoalesce);
+	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
 	FFLoader();
 	NSString *ident = [[NSBundle mainBundle] bundleIdentifier];
 	if ([ident isEqualToString:@"com.apple.springboard"]) {

@@ -10,6 +10,13 @@
 - (void)setBacklightLevel:(float)level;
 @end
 
+@interface CAMShutterButton : UIButton
+@end
+
+@interface CAMBottomBar : UIControl
+- (CAMShutterButton *)shutterButton;
+@end
+
 @interface CAMFlashButton : UIControl
 @property(assign, nonatomic) int flashMode;
 @end
@@ -81,18 +88,16 @@
 @property(assign, nonatomic, getter=isAutoHidden) BOOL autoHidden;
 @end
 
-@interface UIView (PhotoLibraryAdditions)
-- (void)pl_setHidden:(BOOL)hidden animated:(BOOL)animated;
-@end
-
 @interface UIApplication (Addition)
 - (BOOL)isSuspended;
 @end
 
 @interface SBScreenFlash : NSObject
 + (SBScreenFlash *)sharedInstance;
++ (SBScreenFlash *)mainScreenFlasher;
 - (void)flashColor:(UIColor *)color;
+- (void)flashColor:(UIColor *)color withCompletion:(id)completion;
 @end
 
-#define PreferencesChangedNotification "com.PS.FrontFlash.prefs"
+CFStringRef const PreferencesChangedNotification = CFSTR("com.PS.FrontFlash.prefs");
 NSString *const PREF_PATH = @"/var/mobile/Library/Preferences/com.PS.FrontFlash.plist";
