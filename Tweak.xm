@@ -44,13 +44,13 @@ static void flashScreen()
 
 static id cameraInstance()
 {
-	return isiOS8 ? [%c(CAMCaptureController) sharedInstance] : [%c(PLCameraController) sharedInstance];
+	return %c(CAMCaptureController) ? [%c(CAMCaptureController) sharedInstance] : [%c(PLCameraController) sharedInstance];
 }
 
 static int cameraDevice()
 {
 	id view = [cameraInstance() delegate];
-	return isiOS8 ? ((CAMCameraView *)view).cameraDevice : ((PLCameraView *)view).cameraDevice;
+	return %c(CAMCameraView) ? ((CAMCameraView *)view).cameraDevice : ((PLCameraView *)view).cameraDevice;
 }
 
 static BOOL isCapturingVideo()
@@ -181,8 +181,12 @@ static void handleFlashButton()
 - (void)captureOutput:(id)arg1 didStartRecordingToOutputFileAtURL:(id)arg2 fromConnections:(id)arg3
 {
 	%orig;
-	if (cameraDevice() == 1)
-		[(id)flashBtn() setAutoHidden:NO];
+	if (cameraDevice() == 1) {
+		if ([(id)flashBtn() respondsToSelector:@selector(setAllowsAutomaticFlash:)])
+			[(id)flashBtn() setAllowsAutomaticFlash:YES];
+		else if ([(id)flashBtn() respondsToSelector:@selector(setAutoHidden:)])
+			[(id)flashBtn() setAutoHidden:NO];
+	}
 }
 
 %end
@@ -304,17 +308,45 @@ static void handleFlashButton()
 	return %orig;
 }
 
+- (void)_stillDuringVideoPressed:(id)arg1
+{
+	if ([self shouldFlashTheScreen_Video]) {
+		flashScreen();
+		dispatch_queue_t delayCaptureQueue = dispatch_queue_create(delayCaptureQueueKey, NULL);
+		dispatch_async(delayCaptureQueue, ^{
+			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kDelayDuration*NSEC_PER_SEC), delayCaptureQueue, ^(void){
+				%orig;
+			});
+		});
+		dispatch_release(delayCaptureQueue);
+	} else
+		%orig;
+}
+
 - (void)_showControlsForCapturingVideoAnimated:(BOOL)animated
 {
 	%orig;
 	if (FrontFlashOnInVideo && cameraDevice() == 1) {
 		[[self _topBar] setStyle:0 animated:NO];
-		int cameraOrientation = isiOS8 ? [cameraInstance() cameraOrientation] : [cameraInstance() cameraOrientation];
+		int cameraOrientation = [cameraInstance() cameraOrientation];
 		[self _updateTopBarStyleForDeviceOrientation:cameraOrientation];
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (isiOS70 ? .2 : 0)*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
 			[flashBtn() pl_setHidden:NO animated:YES];
 		});
 	}
+}
+
+%new
+- (BOOL)shouldFlashTheScreen_Video
+{
+	int cameraMode = [self cameraMode];
+	BOOL isVideoMode = cameraMode == 1 || cameraMode == 2;
+	BOOL isFrontCamera = [self cameraDevice] == 1;
+	BOOL isNotSuspended = ![[UIApplication sharedApplication] isSuspended];
+	BOOL flashModeIsOn = (((CAMFlashButton *)flashBtn()).flashMode == 1);
+	BOOL controllerFlashModeIsOn = frontFlashActive;
+	BOOL exactMode = isVideoMode && FrontFlashOnInVideo && isCapturingVideo();
+	return (exactMode && isFrontCamera && isNotSuspended) && (flashModeIsOn || controllerFlashModeIsOn);
 }
 
 %new
@@ -331,7 +363,8 @@ static void handleFlashButton()
 		isNotInBurstMode = ![cameraInstance() performingAvalancheCapture];
 	BOOL flashModeIsOn = (((CAMFlashButton *)flashBtn()).flashMode == 1);
 	BOOL controllerFlashModeIsOn = frontFlashActive;
-	return (isStillImageMode && isFrontCamera && isNotSuspended && isNotInBurstMode) && (flashModeIsOn || controllerFlashModeIsOn);
+	BOOL exactMode = isStillImageMode && FrontFlashOnInPhoto;
+	return (exactMode && isFrontCamera && isNotSuspended && isNotInBurstMode) && (flashModeIsOn || controllerFlashModeIsOn);
 }
 
 - (void)_createShutterButtonIfNecessary
