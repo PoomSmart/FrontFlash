@@ -1,6 +1,7 @@
 #import <UIKit/UIKit.h>
 #import <Preferences/PSListController.h>
 #import <Preferences/PSSpecifier.h>
+#import <Social/Social.h>
 #import "NKOColorPickerView.h"
 #import "FrontFlash.h"
 
@@ -59,9 +60,35 @@ NKOColorPickerDidChangeColorBlock colorDidChangeBlock = ^(UIColor *color){
 
 @implementation FrontFlashPreferenceController
 
+- (id)init
+{
+	if (self == [super init]) {
+		UIButton *heart = [[[UIButton alloc] initWithFrame:CGRectZero] autorelease];
+		[heart setImage:[UIImage imageNamed:@"Heart" inBundle:[NSBundle bundleWithPath:@"/Library/PreferenceBundles/CamBlur7Settings.bundle"]] forState:UIControlStateNormal];
+		[heart sizeToFit];
+		[heart addTarget:self action:@selector(love) forControlEvents:UIControlEventTouchUpInside];
+		self.navigationItem.rightBarButtonItem = [[[UIBarButtonItem alloc] initWithCustomView:heart] autorelease];
+	}
+	return self;
+}
+
+- (void)love
+{
+	SLComposeViewController *twitter = [[SLComposeViewController composeViewControllerForServiceType:SLServiceTypeTwitter] retain];
+	[twitter setInitialText:@"#FrontFlash by @PoomSmart is awesome!"];
+	if (twitter != nil)
+		[[self navigationController] presentViewController:twitter animated:YES completion:nil];
+	[twitter release];
+}
+
 - (void)donate:(id)param
 {
 	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:PS_DONATE_URL]];
+}
+
+- (void)twitter:(id)param
+{
+	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:PS_TWITTER_URL]];
 }
 
 - (void)showColorPicker:(id)param

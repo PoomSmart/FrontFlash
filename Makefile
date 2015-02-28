@@ -4,10 +4,13 @@ ARCHS = armv7 arm64
 
 include theos/makefiles/common.mk
 
+AGGREGATE_NAME = FrontFlash
+SUBPROJECTS = FrontFlashiOS456 FrontFlashiOS7 FrontFlashiPadiOS7 FrontFlashiOS8 FrontFlashiPadiOS8
+
+include $(THEOS_MAKE_PATH)/aggregate.mk
+
 TWEAK_NAME = FrontFlash
 FrontFlash_FILES = Tweak.xm
-FrontFlash_FRAMEWORKS = UIKit
-FrontFlash_PRIVATE_FRAMEWORKS = GraphicsServices
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
@@ -15,7 +18,7 @@ BUNDLE_NAME = FrontFlashSettings
 FrontFlashSettings_FILES = FrontFlashPreferenceController.m NKOColorPickerView.m
 FrontFlashSettings_INSTALL_PATH = /Library/PreferenceBundles
 FrontFlashSettings_PRIVATE_FRAMEWORKS = Preferences
-FrontFlashSettings_FRAMEWORKS = CoreGraphics UIKit
+FrontFlashSettings_FRAMEWORKS = CoreGraphics Social UIKit
 
 include $(THEOS_MAKE_PATH)/bundle.mk
 
