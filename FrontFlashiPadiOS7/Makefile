@@ -6,7 +6,6 @@ include ../theos/makefiles/common.mk
 
 TWEAK_NAME = FrontFlashiPadiOS7
 FrontFlashiPadiOS7_FILES = Tweak.xm
-#FrontFlashiPadiOS7_FRAMEWORKS = UIKit
 FrontFlashiPadiOS7_INSTALL_PATH = /Library/Application Support/FrontFlash
 
 include $(THEOS_MAKE_PATH)/tweak.mk

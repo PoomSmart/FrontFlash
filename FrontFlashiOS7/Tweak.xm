@@ -5,7 +5,7 @@ static BOOL FrontFlashOnInPhoto;
 static BOOL FrontFlashOnInVideo;
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
 #define FrontFlashOnRecursively ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && (self.cameraMode == 0 || self.cameraMode == 4)) || (FrontFlashOnInVideo && (self.cameraMode == 1 || self.cameraMode == 2))))
-#define flashIsTurnedOn (self.lastSelectedPhotoFlashMode == 1 || self.videoFlashMode == 1)
+#define flashIsTurnedOn ((isiOS71 ? self.lastSelectedPhotoFlashMode == 1 : self.photoFlashMode == 1) || self.videoFlashMode == 1)
 static BOOL onFlash;
 static BOOL reallyHasFlash;
 
