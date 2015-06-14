@@ -1,79 +1,8 @@
 #import "../FrontFlash.h"
-#import <substrate.h>
+#import "../Tweak.h"
 
-static BOOL FrontFlashOnInPhoto;
-static BOOL FrontFlashOnInVideo;
-#define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
 #define FrontFlashOnRecursively ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && (self.cameraMode == 0 || self.cameraMode == 4)) || (FrontFlashOnInVideo && (self.cameraMode == 1 || self.cameraMode == 2))))
 #define flashIsTurnedOn ((isiOS71 ? self.lastSelectedPhotoFlashMode == 1 : self.photoFlashMode == 1) || self.videoFlashMode == 1)
-static BOOL onFlash;
-static BOOL reallyHasFlash;
-
-static CGFloat alpha;
-static CGFloat hue;
-static CGFloat sat;
-static CGFloat bri;
-
-static int colorProfile;
-
-static void FFLoader()
-{
-	NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:PREF_PATH];
-	FrontFlashOnInPhoto = dict[@"FrontFlashOnInPhoto"] ? [dict[@"FrontFlashOnInPhoto"] boolValue] : YES;
-	FrontFlashOnInVideo = dict[@"FrontFlashOnInVideo"] ? [dict[@"FrontFlashOnInVideo"] boolValue] : YES;
-	hue = dict[@"Hue"] ? [dict[@"Hue"] floatValue] : 1.0f;
-	sat = dict[@"Sat"] ? [dict[@"Sat"] floatValue] : 1.0f;
-	bri = dict[@"Bri"] ? [dict[@"Bri"] floatValue] : 1.0f;
-	alpha = dict[@"Alpha"] ? [dict[@"Alpha"] floatValue] : 1;
-	colorProfile = dict[@"colorProfile"] ? [dict[@"colorProfile"] intValue] : 1;
-}
-
-static void flashScreen(void (^completionBlock)(void))
-{
-	UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
-	float previousBacklightLevel = [UIScreen mainScreen].brightness;
-	[UIScreen mainScreen].brightness = 1.0f;
-	UIView *flashView = [[UIView alloc] initWithFrame:keyWindow.bounds];
-	UIColor *flashColor;
-	switch (colorProfile) {
-		case 1:
-			flashColor = [UIColor whiteColor];
-			break;
-		case 2:
-			flashColor = [UIColor colorWithRed:1.0f green:0.99f blue:0.47f alpha:1.0f];
-			break;
-		case 3:
-			flashColor = [UIColor colorWithRed:0.66f green:0.94f blue:1.0f alpha:1.0f];
-			break;
-		case 4:
-			flashColor = [UIColor colorWithHue:hue saturation:sat brightness:bri alpha:alpha];
-			break;
-	}
-	flashView.backgroundColor = flashColor;
-	flashView.alpha = 0.0f;
-	[keyWindow addSubview:flashView];
-	[UIView animateWithDuration:kDelayDuration delay:0.0f options:UIViewAnimationCurveEaseOut
-		animations:^{
-			flashView.alpha = 1.0f;
-		}
-		completion:^(BOOL finished1) {
-			if (finished1) {
-				if (completionBlock)
-					completionBlock();
-				[UIView animateWithDuration:kDimDuration delay:0.0f options:UIViewAnimationCurveEaseOut
-					animations:^{
-						flashView.alpha = 0.0f;
-					}
-					completion:^(BOOL finished2) {
-						if (finished2) {
-							[flashView removeFromSuperview];
-							[flashView release];
-							[UIScreen mainScreen].brightness = previousBacklightLevel;
-						}
-					}];
-			}
-	}];
-}
 
 %hook PLCameraView
 
@@ -173,13 +102,6 @@ static void flashScreen(void (^completionBlock)(void))
 }
 
 %end
-
-#define VOID(name) name(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
-static void VOID(PreferencesChangedCallback)
-{
-	system("killall Camera");
-	FFLoader();
-}
 
 %ctor
 {

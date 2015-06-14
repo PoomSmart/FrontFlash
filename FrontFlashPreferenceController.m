@@ -14,8 +14,9 @@ __attribute__((visibility("hidden")))
 
 @implementation FrontFlashColorPickerViewController
 
-NKOColorPickerDidChangeColorBlock colorDidChangeBlock = ^(UIColor *color){
-    NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithContentsOfFile:PREF_PATH] mutableCopy] ?: [NSMutableDictionary dictionary];
+NKOColorPickerDidChangeColorBlock colorDidChangeBlock = ^(UIColor *color) {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [dict addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:PREF_PATH]];
     CGFloat hue, sat, bri;
     BOOL getColor = [color getHue:&hue saturation:&sat brightness:&bri alpha:nil];
     if (getColor) {
@@ -42,7 +43,7 @@ NKOColorPickerDidChangeColorBlock colorDidChangeBlock = ^(UIColor *color){
 - (id)init
 {
 	if (self == [super init]) {
-		NKOColorPickerView *colorPickerView = [[[NKOColorPickerView alloc] initWithFrame:CGRectMake(0, 0, 300, 340) color:[[self savedCustomColor] retain] andDidChangeColorBlock:colorDidChangeBlock] autorelease];
+		NKOColorPickerView *colorPickerView = [[[NKOColorPickerView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 300.0f, 340.0f) color:[[self savedCustomColor] retain] andDidChangeColorBlock:colorDidChangeBlock] autorelease];
 		colorPickerView.backgroundColor = [UIColor blackColor];
 		self.view = colorPickerView;
 		self.navigationItem.title = @"Select Color";
