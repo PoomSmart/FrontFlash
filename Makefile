@@ -5,7 +5,7 @@ ARCHS = armv7 arm64
 include theos/makefiles/common.mk
 
 AGGREGATE_NAME = FrontFlash
-SUBPROJECTS = FrontFlashiOS456 FrontFlashiOS7 FrontFlashiPadiOS7 FrontFlashiOS8 FrontFlashiPadiOS8
+SUBPROJECTS = FrontFlashiOS456 FrontFlashiOS7 FrontFlashiPadiOS7 FrontFlashiOS8 FrontFlashiPadiOS8 FrontFlashiOS9 FrontFlashiPadiOS9
 
 include $(THEOS_MAKE_PATH)/aggregate.mk
 

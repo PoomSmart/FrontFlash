@@ -43,7 +43,7 @@ NKOColorPickerDidChangeColorBlock colorDidChangeBlock = ^(UIColor *color) {
 - (id)init
 {
 	if (self == [super init]) {
-		NKOColorPickerView *colorPickerView = [[[NKOColorPickerView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 300.0f, 340.0f) color:[[self savedCustomColor] retain] andDidChangeColorBlock:colorDidChangeBlock] autorelease];
+		NKOColorPickerView *colorPickerView = [[[NKOColorPickerView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 300.0f, 340.0f) color:[self savedCustomColor] andDidChangeColorBlock:colorDidChangeBlock] autorelease];
 		colorPickerView.backgroundColor = [UIColor blackColor];
 		self.view = colorPickerView;
 		self.navigationItem.title = @"Select Color";
@@ -65,7 +65,7 @@ NKOColorPickerDidChangeColorBlock colorDidChangeBlock = ^(UIColor *color) {
 {
 	if (self == [super init]) {
 		UIButton *heart = [[[UIButton alloc] initWithFrame:CGRectZero] autorelease];
-		[heart setImage:[UIImage imageNamed:@"Heart" inBundle:[NSBundle bundleWithPath:@"/Library/PreferenceBundles/CamBlur7Settings.bundle"]] forState:UIControlStateNormal];
+		[heart setImage:[UIImage imageNamed:@"Heart" inBundle:[NSBundle bundleWithPath:@"/Library/PreferenceBundles/FrontFlashSettings.bundle"]] forState:UIControlStateNormal];
 		[heart sizeToFit];
 		[heart addTarget:self action:@selector(love) forControlEvents:UIControlEventTouchUpInside];
 		self.navigationItem.rightBarButtonItem = [[[UIBarButtonItem alloc] initWithCustomView:heart] autorelease];

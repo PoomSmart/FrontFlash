@@ -6,7 +6,7 @@
 #define FrontFlashOnRecursively ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && isPhotoMode) || (FrontFlashOnInVideo && isVideoMode)))
 #define flashIsTurnedOn ((isPhotoMode && self.lastSelectedPhotoFlashMode == 1) || (isVideoMode && self.videoFlashMode == 1))
 
-%hook CAMCameraView
+%hook CMKCameraView
 
 - (void)_captureStillImage
 {
@@ -28,9 +28,9 @@
 	BOOL shouldHook = ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && (mode == 0 || mode == 4)) || (FrontFlashOnInVideo && (mode == 1 || mode == 2 || mode == 6))));
 	if (shouldHook) {
 		onFlash = YES;
-		MSHookIvar<NSInteger>([%c(CAMCaptureController) sharedInstance], "_cameraDevice") = 0;
+		MSHookIvar<NSInteger>([%c(CMKCaptureController) sharedInstance], "_cameraDevice") = 0;
 		BOOL orig = %orig(0);
-		MSHookIvar<NSInteger>([%c(CAMCaptureController) sharedInstance], "_cameraDevice") = 1;
+		MSHookIvar<NSInteger>([%c(CMKCaptureController) sharedInstance], "_cameraDevice") = 1;
 		onFlash = NO;
 		return orig;
 	}
@@ -53,7 +53,7 @@
 	%orig;
 	if (FrontFlashOnInVideo && self.cameraDevice == 1) {
 		[self._topBar setStyle:0 animated:animated];
-		[self _updateTopBarStyleForDeviceOrientation:[(CAMCaptureController *)[%c(CAMCaptureController) sharedInstance] cameraOrientation]];
+		[self _updateTopBarStyleForDeviceOrientation:[(CMKCaptureController *)[%c(CMKCaptureController) sharedInstance] cameraOrientation]];
 		[self._flashButton cam_setHidden:NO animated:animated];
 	}
 }
@@ -67,7 +67,7 @@
 
 %end
 
-%hook CAMCaptureController
+%hook CMKCaptureController
 
 - (BOOL)hasFlash
 {
@@ -85,6 +85,6 @@
 		dlopen("/System/Library/PrivateFrameworks/CameraKit.framework/CameraKit", RTLD_LAZY);
 		%init;
 		if (IPAD)
-			dlopen("/Library/Application Support/FrontFlash/FrontFlashiPadiOS8.dylib", RTLD_LAZY);
+			dlopen("/Library/Application Support/FrontFlash/FrontFlashiPadiOS9.dylib", RTLD_LAZY);
 	}
 }

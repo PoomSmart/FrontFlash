@@ -105,7 +105,6 @@
 
 %ctor
 {
-	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
 	FFLoader();
 	if (FrontFlashOn) {
@@ -114,5 +113,4 @@
 		if (IPAD)
 			dlopen("/Library/Application Support/FrontFlash/FrontFlashiPadiOS7.dylib", RTLD_LAZY);
 	}
-	[pool drain];
 }
