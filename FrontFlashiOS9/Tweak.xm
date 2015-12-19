@@ -108,5 +108,7 @@ ZKSwizzleInterface($_Lamo_CAMViewfinderViewController, CAMViewfinderViewControll
 	if (FrontFlashOn) {
 		dlopen("/System/Library/PrivateFrameworks/CameraUI.framework/CameraUI", RTLD_LAZY);
 		%init;
+		if (IPAD)
+			dlopen("/Library/Application Support/FrontFlash/FrontFlashiPadiOS9.dylib", RTLD_LAZY);
 	}
 }
