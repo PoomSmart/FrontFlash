@@ -6,10 +6,10 @@ static BOOL FrontFlashOnInVideo;
 static BOOL onFlash;
 static BOOL reallyHasFlash;
 
-static CGFloat alpha;
-static CGFloat hue;
-static CGFloat sat;
-static CGFloat bri;
+CGFloat alpha;
+CGFloat hue;
+CGFloat sat;
+CGFloat bri;
 
 static int colorProfile;
 
@@ -21,28 +21,21 @@ static void FFLoader()
 	val = dict[@"FrontFlashOnInVideo"];
 	FrontFlashOnInVideo = val ? [val boolValue] : YES;
 	val = dict[@"Hue"];
-	hue = val ? [val floatValue] : 1.0f;
+	hue = val ? [val floatValue] : 1;
 	val = dict[@"Sat"];
-	sat = val ? [val floatValue] : 1.0f;
+	sat = val ? [val floatValue] : 1;
 	val = dict[@"Bri"];
-	bri = val ? [val floatValue] : 1.0f;
+	bri = val ? [val floatValue] : 1;
 	val = dict[@"Alpha"];
-	alpha = val ? [val floatValue] : 1.0f;
+	alpha = val ? [val floatValue] : 1;
 	val = dict[@"colorProfile"];
 	colorProfile = val ? [val intValue] : 1;
 }
 
-static void flashScreen(void (^completionBlock)(void))
+UIColor *frontFlashColor()
 {
-	UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
-	float previousBacklightLevel = [UIScreen mainScreen].brightness;
-	[UIScreen mainScreen].brightness = 1.0f;
-	UIView *flashView = [[UIView alloc] initWithFrame:keyWindow.bounds];
-	UIColor *flashColor;
+	UIColor *flashColor = [UIColor whiteColor];
 	switch (colorProfile) {
-		case 1:
-			flashColor = [UIColor whiteColor];
-			break;
 		case 2:
 			flashColor = [UIColor colorWithRed:1.0f green:0.99f blue:0.47f alpha:1.0f];
 			break;
@@ -53,26 +46,35 @@ static void flashScreen(void (^completionBlock)(void))
 			flashColor = [UIColor colorWithHue:hue saturation:sat brightness:bri alpha:alpha];
 			break;
 	}
+	return flashColor;
+}
+
+static void flashScreen(UIView *keyWindow, void (^completionBlock)(void))
+{
+	float previousBacklightLevel = [UIScreen mainScreen].brightness;
+	UIScreen.mainScreen.brightness = 1;
+	UIView *flashView = [[UIView alloc] initWithFrame:keyWindow.frame];
+	UIColor *flashColor = frontFlashColor();
 	flashView.backgroundColor = flashColor;
-	flashView.alpha = 0.0f;
+	flashView.alpha = 0;
 	[keyWindow addSubview:flashView];
-	[UIView animateWithDuration:kDelayDuration delay:0.0f options:UIViewAnimationCurveEaseOut
+	[UIView animateWithDuration:kDelayDuration delay:0 options:UIViewAnimationCurveEaseOut
 		animations:^{
-			flashView.alpha = 1.0f;
+			flashView.alpha = 1;
 		}
 		completion:^(BOOL finished1) {
 			if (finished1) {
 				if (completionBlock)
 					completionBlock();
-				[UIView animateWithDuration:kDimDuration delay:0.0f options:UIViewAnimationCurveEaseOut
+				[UIView animateWithDuration:kDimDuration delay:0 options:UIViewAnimationCurveEaseOut
 					animations:^{
-						flashView.alpha = 0.0f;
+						flashView.alpha = 0;
 					}
 					completion:^(BOOL finished2) {
 						if (finished2) {
 							[flashView removeFromSuperview];
 							[flashView release];
-							[UIScreen mainScreen].brightness = previousBacklightLevel;
+							UIScreen.mainScreen.brightness = previousBacklightLevel;
 						}
 					}];
 			}

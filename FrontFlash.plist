@@ -1,1 +1,14 @@
-{ Filter = { Bundles = ( "com.apple.camera", "com.apple.springboard", "com.apple.MobileSMS", "com.bitesms" ); }; }
+{
+	Filter = {
+		Mode = Any;
+		Executables = (
+			mediaserverd,
+		);
+		Bundles = (
+			"com.apple.camera",
+			"com.apple.springboard",
+			"com.apple.MobileSMS",
+			"com.bitesms",
+		);
+	};
+}

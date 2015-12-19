@@ -1,8 +1,8 @@
+#import "../PS.h"
 #import <UIKit/UIKit.h>
 #import <GraphicsServices/GSEvent.h>
-#import "../PS.h"
 
-#define kDelayDuration 0.2f
+#define kDelayDuration 0.2
 #define kDimDuration 1
 
 CFStringRef const PreferencesChangedNotification = CFSTR("com.PS.FrontFlash.prefs");

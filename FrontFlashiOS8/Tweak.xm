@@ -11,7 +11,7 @@
 - (void)_captureStillImage
 {
 	if (FrontFlashOnRecursively && flashIsTurnedOn)
-		flashScreen(^{%orig;});
+		flashScreen([UIApplication sharedApplication].keyWindow, ^{%orig;});
 	else
 		%orig;
 }

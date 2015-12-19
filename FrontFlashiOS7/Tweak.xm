@@ -8,9 +8,10 @@
 
 - (void)_shutterButtonClicked
 {
-	if (FrontFlashOnRecursively && flashIsTurnedOn)
-		flashScreen(^{%orig;});
-	else
+	if (FrontFlashOnRecursively && flashIsTurnedOn) {
+		void (^orig)(void) = ^{ %orig; };
+		flashScreen([UIApplication sharedApplication].keyWindow, orig);
+	} else
 		%orig;
 }
 
@@ -70,9 +71,10 @@
 
 - (void)_stillDuringVideoPressed:(id)arg1
 {
-	if (FrontFlashOnRecursively && flashIsTurnedOn)
-		flashScreen(^{%orig;});
-	else
+	if (FrontFlashOnRecursively && flashIsTurnedOn) {
+		void (^orig)(void) = ^{ %orig; };
+		flashScreen([UIApplication sharedApplication].keyWindow, orig);
+	} else
 		%orig;
 }
 

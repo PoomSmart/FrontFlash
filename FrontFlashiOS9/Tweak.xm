@@ -1,90 +1,112 @@
 #import "../FrontFlash.h"
 #import "../Tweak.h"
+#import "../ZKSwizzle.h"
 
-#define isVideoMode (self.cameraMode == 1 || self.cameraMode == 2 || self.cameraMode == 6)
-#define isPhotoMode (self.cameraMode == 0 || self.cameraMode == 4)
-#define FrontFlashOnRecursively ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && isPhotoMode) || (FrontFlashOnInVideo && isVideoMode)))
-#define flashIsTurnedOn ((isPhotoMode && self.lastSelectedPhotoFlashMode == 1) || (isVideoMode && self.videoFlashMode == 1))
+#define isVideoMode(mode) (mode == 1 || mode == 2 || mode == 6)
+#define isPhotoMode(mode) (mode == 0 || mode == 4)
+#define FrontFlashOnRecursively(mode, device) ((device == 1) && ((FrontFlashOnInPhoto && isPhotoMode(mode)) || (FrontFlashOnInVideo && isVideoMode(mode))))
+#define flashIsTurnedOn ((isPhotoMode(self._currentMode) && self._desiredFlashMode == 1) || (isVideoMode(self._currentMode) && self._desiredTorchMode == 1))
 
-%hook CMKCameraView
+BOOL noAnimation = NO;
 
-- (void)_captureStillImage
+%hook CAMCaptureCapabilities
+
+- (BOOL)isFrontFlashSupported
 {
-	if (FrontFlashOnRecursively && flashIsTurnedOn)
-		flashScreen(^{%orig;});
-	else
-		%orig;
+	return YES;
 }
 
-- (void)_createDefaultControlsIfNecessary
+%end
+
+%hook CAMLegacyStillImageCaptureRequest
+
+- (int)flashMode
 {
-	onFlash = YES;
-	%orig;
-	onFlash = NO;
+	return 0;
 }
 
-- (BOOL)_shouldHideFlashButtonForMode:(NSInteger)mode
+%end
+
+%hook CAMMutableStillImageCaptureRequest
+
+- (int)flashMode
 {
-	BOOL shouldHook = ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && (mode == 0 || mode == 4)) || (FrontFlashOnInVideo && (mode == 1 || mode == 2 || mode == 6))));
-	if (shouldHook) {
-		onFlash = YES;
-		MSHookIvar<NSInteger>([%c(CMKCaptureController) sharedInstance], "_cameraDevice") = 0;
-		BOOL orig = %orig(0);
-		MSHookIvar<NSInteger>([%c(CMKCaptureController) sharedInstance], "_cameraDevice") = 1;
-		onFlash = NO;
-		return orig;
-	}
-	return %orig;
+	return 0;
 }
 
-- (BOOL)_shouldEnableFlashButton
-{	
-	if (FrontFlashOnRecursively && [self _isCapturing]) {
-		MSHookIvar<BOOL>(self, "__capturing") = NO;
-		BOOL orig = %orig;
-		MSHookIvar<BOOL>(self, "__capturing") = YES;
-		return orig;
-	}
-	return %orig;
+%end
+
+ZKSwizzleInterface($_Lamo_CAMViewfinderViewController, CAMViewfinderViewController, NSObject);
+
+@interface $_Lamo_CAMViewfinderViewController (Hey)
+@property NSInteger _desiredFlashMode;
+@property NSInteger _desiredTorchMode;
+@property NSInteger _flashMode;
+@property NSInteger _currentMode;
+@property NSInteger _currentDevice;
+- (CAMFlashButton *)_flashButton;
+@end
+
+@implementation $_Lamo_CAMViewfinderViewController
+
+- (BOOL)_shouldHideFlashButtonForMode:(int)mode device:(int)device
+{
+	if (isVideoMode(mode) && device == 1)
+		return NO;
+	return ZKOrig(BOOL, mode, device);
 }
 
-- (void)_showControlsForCapturingVideoAnimated:(BOOL)animated
+- (void)captureController:(id)arg1 didOutputTorchAvailability:(BOOL)arg2
 {
-	%orig;
-	if (FrontFlashOnInVideo && self.cameraDevice == 1) {
-		[self._topBar setStyle:0 animated:animated];
-		[self _updateTopBarStyleForDeviceOrientation:[(CMKCaptureController *)[%c(CMKCaptureController) sharedInstance] cameraOrientation]];
-		[self._flashButton cam_setHidden:NO animated:animated];
-	}
+	if (isVideoMode(self._currentMode) && self._currentDevice == 1)
+		return;
+	ZKOrig(void, arg1, arg2);
+}
+
+- (void)stillImageRequestDidStartCapturing:(id)arg1
+{
+	noAnimation = FrontFlashOnRecursively(self._currentMode, self._currentDevice) && flashIsTurnedOn;
+	ZKOrig(void, arg1);
+	noAnimation = NO;
+}
+
+- (void)_performCaptureAnimation
+{
+	if (noAnimation)
+		return;
+	ZKOrig(void);
+}
+
+- (void)_captureStillImageWithCurrentSettings
+{
+	if (FrontFlashOnRecursively(self._currentMode, self._currentDevice) && flashIsTurnedOn) {
+		UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
+		void (^post)() = ^{ ZKOrig(void); };
+		flashScreen(keyWindow, post);
+	} else
+		ZKOrig(void);
 }
 
 - (void)captureController:(id)controller didStartRecordingForVideoRequest:(id)request
 {
-	%orig;
-	if (self.cameraDevice == 1)
+	ZKOrig(void, controller, request);
+	if (self._currentDevice == 1)
 		self._flashButton.allowsAutomaticFlash = NO;
 }
 
-%end
-
-%hook CMKCaptureController
-
-- (BOOL)hasFlash
+- (void)_updateTopBarStyleForMode:(int)mode device:(int)device capturing:(BOOL)capturing animated:(BOOL)animated
 {
-	reallyHasFlash = %orig;
-	return onFlash ? YES : reallyHasFlash;
+	ZKOrig(void, mode, device, NO, animated);
 }
 
-%end
+@end
 
 %ctor
 {
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
 	FFLoader();
 	if (FrontFlashOn) {
-		dlopen("/System/Library/PrivateFrameworks/CameraKit.framework/CameraKit", RTLD_LAZY);
+		dlopen("/System/Library/PrivateFrameworks/CameraUI.framework/CameraUI", RTLD_LAZY);
 		%init;
-		if (IPAD)
-			dlopen("/Library/Application Support/FrontFlash/FrontFlashiPadiOS9.dylib", RTLD_LAZY);
 	}
 }

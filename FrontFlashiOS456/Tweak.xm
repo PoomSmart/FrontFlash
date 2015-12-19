@@ -36,17 +36,19 @@ static void handleFlashButton(PLCameraView *cameraView)
 
 - (void)_captureStillDuringVideo
 {
-	if (frontFlashActive && FrontFlashOnRecursively)
-		flashScreen(^{%orig;});
-	else
+	if (frontFlashActive && FrontFlashOnRecursively) {
+		void (^orig)(void) = ^{ %orig; };
+		flashScreen([UIApplication sharedApplication].keyWindow, orig);
+	} else
 		%orig;
 }
 
 - (void)cameraShutterClicked:(PLCameraButton *)button
 {
-	if (frontFlashActive && FrontFlashOnRecursively && MSHookIvar<NSInteger>(button, "_buttonMode") == 0)
-		flashScreen(^{%orig;});
-	else
+	if (frontFlashActive && FrontFlashOnRecursively && MSHookIvar<NSInteger>(button, "_buttonMode") == 0) {
+		void (^orig)(void) = ^{ %orig; };
+		flashScreen([UIApplication sharedApplication].keyWindow, orig);
+	} else
 		%orig;
 	handleFlashButton(self);
 }
@@ -118,9 +120,10 @@ static void handleFlashButton(PLCameraView *cameraView)
 
 - (void)sc2_captureImage
 {
-	if (frontFlashActive && FrontFlashOnRecursively)
-		flashScreen(^{%orig;});
-	else
+	if (frontFlashActive && FrontFlashOnRecursively) {
+		void (^orig)(void) = ^{ %orig; };
+		flashScreen([UIApplication sharedApplication].keyWindow, orig);
+	} else
 		%orig;
 }
 
