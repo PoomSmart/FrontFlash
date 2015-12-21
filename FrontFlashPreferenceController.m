@@ -24,6 +24,7 @@ NKOColorPickerDidChangeColorBlock colorDidChangeBlock = ^(UIColor *color) {
 		[dict setObject:@(sat) forKey:@"Sat"];
 		[dict setObject:@(bri) forKey:@"Bri"];
 		[dict writeToFile:PREF_PATH atomically:YES];
+		CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), PreferencesChangedNotification, NULL, NULL, YES);
 	}
 };
 
@@ -43,8 +44,10 @@ NKOColorPickerDidChangeColorBlock colorDidChangeBlock = ^(UIColor *color) {
 - (id)init
 {
 	if (self == [super init]) {
-		NKOColorPickerView *colorPickerView = [[[NKOColorPickerView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 300.0f, 340.0f) color:[self savedCustomColor] andDidChangeColorBlock:colorDidChangeBlock] autorelease];
+		UIColor *color = [[self savedCustomColor] retain];
+		NKOColorPickerView *colorPickerView = [[[NKOColorPickerView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 300.0f, 340.0f) color:color andDidChangeColorBlock:colorDidChangeBlock] autorelease];
 		colorPickerView.backgroundColor = [UIColor blackColor];
+		[colorPickerView setColor:color];
 		self.view = colorPickerView;
 		self.navigationItem.title = @"Select Color";
 		self.navigationItem.rightBarButtonItem = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:0 target:self action:@selector(dismissPicker)] autorelease];

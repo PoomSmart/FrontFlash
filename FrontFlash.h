@@ -1,6 +1,5 @@
 #import "../PS.h"
 #import <UIKit/UIKit.h>
-#import <GraphicsServices/GSEvent.h>
 
 #define kDelayDuration 0.2
 #define kDimDuration 1

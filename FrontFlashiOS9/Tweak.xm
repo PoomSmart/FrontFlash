@@ -8,12 +8,22 @@
 #define flashIsTurnedOn ((isPhotoMode(self._currentMode) && self._desiredFlashMode == 1) || (isVideoMode(self._currentMode) && self._desiredTorchMode == 1))
 
 BOOL noAnimation = NO;
+BOOL override = NO;
+
+%hook AVCaptureFigVideoDevice
+
+- (BOOL)hasFlash
+{
+	return FrontFlashOnInPhoto || FrontFlashOnInVideo;
+}
+
+%end
 
 %hook CAMCaptureCapabilities
 
 - (BOOL)isFrontFlashSupported
 {
-	return YES;
+	return FrontFlashOnInPhoto || FrontFlashOnInVideo;
 }
 
 %end
@@ -22,7 +32,7 @@ BOOL noAnimation = NO;
 
 - (int)flashMode
 {
-	return 0;
+	return override ? 0 : %orig;
 }
 
 %end
@@ -31,7 +41,7 @@ BOOL noAnimation = NO;
 
 - (int)flashMode
 {
-	return 0;
+	return override ? 0 : %orig;
 }
 
 %end
@@ -81,7 +91,7 @@ ZKSwizzleInterface($_Lamo_CAMViewfinderViewController, CAMViewfinderViewControll
 {
 	if (FrontFlashOnRecursively(self._currentMode, self._currentDevice) && flashIsTurnedOn) {
 		UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
-		void (^post)() = ^{ ZKOrig(void); };
+		void (^post)() = ^{ override = YES; ZKOrig(void); override = NO; };
 		flashScreen(keyWindow, post);
 	} else
 		ZKOrig(void);

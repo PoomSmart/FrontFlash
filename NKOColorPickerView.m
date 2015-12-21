@@ -56,17 +56,17 @@ CGFloat const NKOPickerViewBrightnessIndicatorWidth     = 16.f;
 CGFloat const NKOPickerViewBrightnessIndicatorHeight    = 48.f;
 CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 
-@interface NKOColorPickerView() {
-	CGFloat currentBrightness;
-	CGFloat currentHue;
-	CGFloat currentSaturation;
-}
+@interface NKOColorPickerView()
 
 @property (nonatomic, strong) NKOBrightnessView *gradientView;
+
 @property (nonatomic, strong) UIImageView *brightnessIndicator;
 @property (nonatomic, strong) UIImageView *hueSatImage;
-@property (nonatomic, strong) UIView *overlayView;
 @property (nonatomic, strong) UIView *crossHairs;
+
+@property (nonatomic, assign) CGFloat currentBrightness;
+@property (nonatomic, assign) CGFloat currentSaturation;
+@property (nonatomic, assign) CGFloat currentHue;
 
 @end
 
@@ -95,18 +95,12 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 {
     [super willMoveToSuperview:newSuperview];
     
-    if (_color == nil){
-        _color = [self _defaultTintColor];
-    }
-    
     [self.crossHairs setHidden:NO];
     [self.brightnessIndicator setHidden:NO];
     
-    [self setColor:_color];
-    [self _updateBrightnessPosition];
-    [self _updateGradientColor];
-    [self _updateCrosshairPosition];
-    self.crossHairs.layer.backgroundColor = _color.CGColor;
+    if (self->_color == nil){
+        self.color = [self _defaultTintColor];
+    }
 }
 
 - (void)layoutSubviews
@@ -137,34 +131,32 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 
 - (void)setColor:(UIColor *)newColor
 {
-    CGFloat hue, saturation;
+    CGFloat hue = 0.f;
+    CGFloat saturation = 0.f;
     [newColor getHue:&hue saturation:&saturation brightness:nil alpha:nil];
-    currentHue = hue;
-    currentSaturation = saturation;
+    
+    self.currentHue = hue;
+    self.currentSaturation = saturation;
     [self _setColor:newColor];
     [self _updateGradientColor];
     [self _updateBrightnessPosition];
     [self _updateCrosshairPosition];
-    self.crossHairs.layer.backgroundColor = newColor.CGColor;
 }
 
 #pragma mark - Private methods
+
 - (void)_setColor:(UIColor *)newColor
 {
-    if (![_color isEqual:newColor]){
-    	self.crossHairs.layer.backgroundColor = newColor.CGColor;
+    if (![self->_color isEqual:newColor]){
         CGFloat brightness;
         [newColor getHue:NULL saturation:NULL brightness:&brightness alpha:NULL];
         CGColorSpaceModel colorSpaceModel = CGColorSpaceGetModel(CGColorGetColorSpace(newColor.CGColor));
         if (colorSpaceModel==kCGColorSpaceModelMonochrome) {
             const CGFloat *c = CGColorGetComponents(newColor.CGColor);
-            _color = [UIColor colorWithHue:0
-                                saturation:0
-                                brightness:c[0]
-                                     alpha:1.0];
+            self->_color = [UIColor colorWithHue:0 saturation:0 brightness:c[0] alpha:1.0];
         }
         else{
-            _color = [newColor copy];
+            self->_color = [newColor copy];
         }
         
         if (self.didChangeColorBlock != nil){
@@ -175,12 +167,15 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 
 - (void)_updateBrightnessPosition
 {
-    [_color getHue:nil saturation:nil brightness:&currentBrightness alpha:nil];
+	CGFloat brightness = 0.f;
+    [self.color getHue:nil saturation:nil brightness:&brightness alpha:nil];
+    
+    self.currentBrightness = brightness;
     
     CGPoint brightnessPosition;
-    brightnessPosition.x = (1.0-currentBrightness)*self.gradientView.frame.size.width + self.gradientView.frame.origin.x;
+    brightnessPosition.x = (1.0-self.currentBrightness)*self.gradientView.frame.size.width + self.gradientView.frame.origin.x;
     brightnessPosition.y = self.gradientView.center.y;
-    self.overlayView.alpha = 1.0-currentBrightness;
+
     self.brightnessIndicator.center = brightnessPosition;
 }
 
@@ -188,36 +183,35 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 {
     CGPoint hueSatPosition;
     
-    hueSatPosition.x = (currentHue * self.hueSatImage.frame.size.width) + self.hueSatImage.frame.origin.x;
-    hueSatPosition.y = (1.0-currentSaturation) * self.hueSatImage.frame.size.height + self.hueSatImage.frame.origin.y;
+    hueSatPosition.x = (self.currentHue * self.hueSatImage.frame.size.width) + self.hueSatImage.frame.origin.x;
+    hueSatPosition.y = (1.0-self.currentSaturation) * self.hueSatImage.frame.size.height + self.hueSatImage.frame.origin.y;
     
     self.crossHairs.center = hueSatPosition;
-    self.crossHairs.layer.backgroundColor = _color.CGColor;
     [self _updateGradientColor];
 }
 
 - (void)_updateGradientColor
 {
-    UIColor *gradientColor = [UIColor colorWithHue:currentHue
-                                        saturation:currentSaturation
+    UIColor *gradientColor = [UIColor colorWithHue:self.currentHue
+                                        saturation:self.currentSaturation
                                         brightness:1.0
                                              alpha:1.0];
 	
-    
+    self.crossHairs.layer.backgroundColor = gradientColor.CGColor;
 	[self.gradientView setColor:gradientColor];
 }
 
 - (void)_updateHueSatWithMovement:(CGPoint)position
 {
-	currentHue = (position.x - self.hueSatImage.frame.origin.x) / self.hueSatImage.frame.size.width;
-	currentSaturation = 1.0 -  (position.y - self.hueSatImage.frame.origin.y) / self.hueSatImage.frame.size.height;
+	self.currentHue = (position.x - self.hueSatImage.frame.origin.x) / self.hueSatImage.frame.size.width;
+	self.currentSaturation = 1.0 -  (position.y - self.hueSatImage.frame.origin.y) / self.hueSatImage.frame.size.height;
     
-	UIColor *_tcolor = [UIColor colorWithHue:currentHue
-                                  saturation:currentSaturation
-                                  brightness:currentBrightness
+	UIColor *_tcolor = [UIColor colorWithHue:self.currentHue
+                                  saturation:self.currentSaturation
+                                  brightness:self.currentBrightness
                                        alpha:1.0];
-    UIColor *gradientColor = [UIColor colorWithHue:currentHue
-                                        saturation:currentSaturation
+    UIColor *gradientColor = [UIColor colorWithHue:self.currentHue
+                                        saturation:self.currentSaturation
                                         brightness:1.0
                                              alpha:1.0];
 	
@@ -230,21 +224,17 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 
 - (void)_updateBrightnessWithMovement:(CGPoint)position
 {
-	currentBrightness = 1.0 - ((position.x - self.gradientView.frame.origin.x)/self.gradientView.frame.size.width) ;
-	self.overlayView.alpha = 1.0-currentBrightness;
-	UIColor *_tcolor = [UIColor colorWithHue:currentHue
-                                  saturation:currentSaturation
-                                  brightness:currentBrightness
+	self.currentBrightness = 1.0 - ((position.x - self.gradientView.frame.origin.x)/self.gradientView.frame.size.width) ;
+
+	UIColor *_tcolor = [UIColor colorWithHue:self.currentHue
+                                  saturation:self.currentSaturation
+                                  brightness:self.currentBrightness
                                        alpha:1.0];
     [self _setColor:_tcolor];
 }
 
 - (UIColor*)_defaultTintColor
 {
-   /* UIWindow *window = [[[UIApplication sharedApplication] delegate] window];
-    if ([window respondsToSelector:@selector(tintColor)]) {
-        return [window tintColor];
-    }*/
     return [UIColor whiteColor];
 }
 
@@ -276,6 +266,7 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 }
 
 #pragma mark - Lazy loading
+
 - (NKOBrightnessView*)gradientView
 {
     if (self->_gradientView == nil){
@@ -317,19 +308,8 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
         self->_hueSatImage.layer.masksToBounds = YES;
     }
     
-    if (self->_overlayView == nil) {
-    	self->_overlayView = [[UIView alloc] initWithFrame:self->_hueSatImage.frame];
-    	self->_overlayView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    	self->_overlayView.layer.cornerRadius = 6.f;
-    	self->_overlayView.backgroundColor = [UIColor blackColor];
-    	self->_overlayView.alpha = 1;
-    }
-    
     if (self->_hueSatImage.superview == nil){
         [self addSubview:self->_hueSatImage];
-    }
-    if (self->_overlayView.superview == nil){
-        [self insertSubview:self->_overlayView aboveSubview:self->_hueSatImage];
     }
     
     return self->_hueSatImage;
@@ -357,7 +337,7 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
     }
     
     if (self->_crossHairs.superview == nil){
-        [self insertSubview:self->_crossHairs aboveSubview:self.overlayView];
+        [self insertSubview:self->_crossHairs aboveSubview:self.hueSatImage];
     }
     
     return self->_crossHairs;
@@ -397,8 +377,8 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 
 - (void)setColor:(UIColor*)color
 {
-    if (_color != color){
-        _color = [color copy];
+    if (self->_color != color){
+        self->_color = [color copy];
         [self setupGradient];
         [self setNeedsDisplay];
     }
@@ -406,7 +386,7 @@ CGFloat const NKOPickerViewCrossHairshWidthAndHeight    = 38.f;
 
 - (void)setupGradient
 {
-	const CGFloat *c = CGColorGetComponents(_color.CGColor);
+	const CGFloat *c = CGColorGetComponents(self.color.CGColor);
     
 	CGFloat colors[] = {
 		c[0], c[1], c[2], 1.0f,
