@@ -7,7 +7,7 @@ BOOL override = NO;
 
 - (CGSize)_topBarSizeForTraitCollection:(id)arg1
 {
-	return CGSizeMake(200.0f, 40.0f);
+	return CGSizeMake(200.0, 40.0);
 }
 
 %end
@@ -55,8 +55,3 @@ BOOL override = NO;
 }
 
 %end
-
-%ctor
-{
-	%init;
-}

@@ -14,7 +14,7 @@ BOOL override = NO;
 
 - (BOOL)hasFlash
 {
-	return FrontFlashOnInPhoto || FrontFlashOnInVideo;
+	return FrontFlashOn;
 }
 
 %end
@@ -23,7 +23,7 @@ BOOL override = NO;
 
 - (BOOL)isFrontFlashSupported
 {
-	return FrontFlashOnInPhoto || FrontFlashOnInVideo;
+	return FrontFlashOn;
 }
 
 %end
@@ -116,7 +116,7 @@ ZKSwizzleInterface($_Lamo_CAMViewfinderViewController, CAMViewfinderViewControll
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
 	FFLoader();
 	if (FrontFlashOn) {
-		dlopen("/System/Library/PrivateFrameworks/CameraUI.framework/CameraUI", RTLD_LAZY);
+		openCamera9();
 		%init;
 		if (IPAD)
 			dlopen("/Library/Application Support/FrontFlash/FrontFlashiPadiOS9.dylib", RTLD_LAZY);

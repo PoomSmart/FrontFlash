@@ -1,7 +1,7 @@
 FrontFlash
 ==========
 
-simulate Flash in Front-Facing-Camera, even in iPad.
+Front-facing camera flash, even in iPad.
 
 Compatible with iOS 4+
 

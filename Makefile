@@ -1,7 +1,9 @@
 GO_EASY_ON_ME = 1
 TARGET = iphone:latest:6.0
+DEBUG = 0
+PACKAGE_VERSION = 1.6-7
 
-include theos/makefiles/common.mk
+include $(THEOS)/makefiles/common.mk
 
 AGGREGATE_NAME = FrontFlash
 SUBPROJECTS = FrontFlashiOS456 FrontFlashiOS7 FrontFlashiPadiOS7 FrontFlashiOS8 FrontFlashiPadiOS8 FrontFlashiOS9 FrontFlashiPadiOS9

@@ -44,7 +44,7 @@
 	onFlash = NO;
 }
 
-- (BOOL)_shouldHideFlashButtonForMode:(NSInteger)mode
+- (BOOL)_shouldHideFlashButtonForMode:(int)mode
 {
 	BOOL shouldHook = ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && (mode == 0 || mode == 4)) || (FrontFlashOnInVideo && (mode == 1 || mode == 2))));
 	if (shouldHook) {
@@ -83,7 +83,7 @@
 	%orig;
 	if (FrontFlashOnInVideo && self.cameraDevice == 1) {
 		[self._topBar setStyle:0 animated:animated];
-		[self _updateTopBarStyleForDeviceOrientation:[[%c(PLCameraController) sharedInstance] cameraOrientation]];
+		[self _updateTopBarStyleForDeviceOrientation:[(PLCameraController *)[%c(PLCameraController) sharedInstance] cameraOrientation]];
 		if (isiOS70) {
 			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.3*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
 				[self._flashButton pl_setHidden:NO animated:animated];
@@ -110,7 +110,7 @@
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
 	FFLoader();
 	if (FrontFlashOn) {
-		dlopen("/System/Library/PrivateFrameworks/PhotoLibrary.framework/PhotoLibrary", RTLD_LAZY);
+		openCamera7();
 		%init;
 		if (IPAD)
 			dlopen("/Library/Application Support/FrontFlash/FrontFlashiPadiOS7.dylib", RTLD_LAZY);

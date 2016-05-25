@@ -22,7 +22,7 @@ static BOOL hook2;
 
 - (CGSize)sizeThatFits:(CGSize)size
 {
-	return CGSizeMake(200.0f, 40.0f);
+	return CGSizeMake(200.0, 40.0);
 }
 
 %end
@@ -42,7 +42,7 @@ static BOOL hook2;
 
 %hook CAMCameraView
 
-- (BOOL)_shouldApplyRotationDirectlyToTopBarForOrientation:(NSInteger)orientation cameraMode:(NSInteger)mode
+- (BOOL)_shouldApplyRotationDirectlyToTopBarForOrientation:(int)orientation cameraMode:(int)mode
 {
 	return YES;
 }
@@ -66,14 +66,14 @@ static BOOL hook2;
 		[self._topBar pl_setHidden:YES animated:NO];
 }
 
-- (void)_showControlsForChangeToMode:(NSInteger)mode animated:(BOOL)animated
+- (void)_showControlsForChangeToMode:(int)mode animated:(BOOL)animated
 {
 	%orig;
 	if (self.cameraDevice != 1)
 		[self._topBar pl_setHidden:YES animated:NO];
 }
 
-- (void)_updateTopBarStyleForDeviceOrientation:(NSInteger)orientation
+- (void)_updateTopBarStyleForDeviceOrientation:(int)orientation
 {
 	%orig;
 	if (self.cameraDevice == 1)
@@ -82,7 +82,7 @@ static BOOL hook2;
 		[self._topBar pl_setHidden:YES animated:NO];
 }
 
-- (void)_applyTopBarRotationForDeviceOrientation:(NSInteger)orientation
+- (void)_applyTopBarRotationForDeviceOrientation:(int)orientation
 {
 	hook = YES;
 	%orig;
@@ -94,15 +94,10 @@ static BOOL hook2;
 		[self._topBar pl_setHidden:YES animated:NO];
 }
 
-- (void)cameraController:(id)controller willChangeToMode:(NSInteger)mode device:(NSInteger)device
+- (void)cameraController:(id)controller willChangeToMode:(int)mode device:(int)device
 {
 	%orig;
 	[self._topBar pl_setHidden:(device != 1) animated:YES];
 }
 
 %end
-
-%ctor
-{
-	%init;
-}

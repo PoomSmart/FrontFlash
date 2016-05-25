@@ -23,7 +23,7 @@
 	onFlash = NO;
 }
 
-- (BOOL)_shouldHideFlashButtonForMode:(NSInteger)mode
+- (BOOL)_shouldHideFlashButtonForMode:(int)mode
 {
 	BOOL shouldHook = ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && (mode == 0 || mode == 4)) || (FrontFlashOnInVideo && (mode == 1 || mode == 2 || mode == 6))));
 	if (shouldHook) {
@@ -82,7 +82,7 @@
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
 	FFLoader();
 	if (FrontFlashOn) {
-		dlopen("/System/Library/PrivateFrameworks/CameraKit.framework/CameraKit", RTLD_LAZY);
+		openCamera8();
 		%init;
 		if (IPAD)
 			dlopen("/Library/Application Support/FrontFlash/FrontFlashiPadiOS8.dylib", RTLD_LAZY);

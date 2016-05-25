@@ -88,7 +88,7 @@ static void handleFlashButton(PLCameraView *cameraView)
 
 - (void)setFlashMode:(NSInteger)mode notifyDelegate:(BOOL)delegate
 {
-	%orig(([[NSClassFromString(@"PLCameraController") sharedInstance] isCapturingVideo] && mode == -1 && !reallyHasFlash && self.flashMode == 1) ? 1 : mode, delegate);
+	%orig(([(PLCameraController *)[NSClassFromString(@"PLCameraController") sharedInstance] isCapturingVideo] && mode == -1 && !reallyHasFlash && self.flashMode == 1) ? 1 : mode, delegate);
 }
 
 - (void)_collapseAndSetMode:(NSInteger)mode animated:(BOOL)animated
@@ -133,11 +133,10 @@ static void handleFlashButton(PLCameraView *cameraView)
 
 %ctor
 {
-	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
 	FFLoader();
 	if (FrontFlashOn) {
-		dlopen("/System/Library/PrivateFrameworks/PhotoLibrary.framework/PhotoLibrary", RTLD_LAZY);
+		openCamera6();
 		%init;
 		if (isiOS45) {
 			if (dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY) != NULL) {
@@ -145,5 +144,4 @@ static void handleFlashButton(PLCameraView *cameraView)
 			}
 		}
 	}
-	[pool drain];
 }
