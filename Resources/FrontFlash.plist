@@ -21,8 +21,8 @@
         <key>label</key>
         <string>FrontFlash</string>
         <key>footerText</key>
-        <string>FrontFlash will display a screen with user-defined color or color from Profiles when Flash Mode is set to On, in Front Camera and after you press shutter button, also providing a maximum light (brightness) from iDevice's screen to give you the best illumination. Useful in dark environment!
-Screen brightness will be returned to default value automatically after taking photo.</string>
+        <string>FrontFlash will flash your screen with color of your choice when you take photos using front-facing camera and having flash mode on. Screen brightness will be set to maximum to give you the best illumination in dark environment.
+The brightness will be set to default value automatically after taking photos.</string>
       </dict>
       <dict>
         <key>cell</key>
@@ -86,9 +86,7 @@ Screen brightness will be returned to default value automatically after taking p
         <key>cell</key>
         <string>PSGroupCell</string>
         <key>label</key>
-        <string>If Color Profile is Custom</string>
-        <key>footerText</key>
-        <string></string>
+        <string>Color Profile (Custom)</string>
       </dict>
       <dict>
             <key>cell</key>

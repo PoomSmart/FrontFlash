@@ -49,11 +49,11 @@ BOOL override = NO;
 ZKSwizzleInterface($_Lamo_CAMViewfinderViewController, CAMViewfinderViewController, NSObject);
 
 @interface $_Lamo_CAMViewfinderViewController (Hey)
-@property NSInteger _desiredFlashMode;
-@property NSInteger _desiredTorchMode;
-@property NSInteger _flashMode;
-@property NSInteger _currentMode;
-@property NSInteger _currentDevice;
+@property int _desiredFlashMode;
+@property int _desiredTorchMode;
+@property int _flashMode;
+@property int _currentMode;
+@property int _currentDevice;
 - (CAMFlashButton *)_flashButton;
 @end
 

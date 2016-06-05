@@ -4,6 +4,8 @@
 #define FrontFlashOnRecursively ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && (self.cameraMode == 0 || self.cameraMode == 4)) || (FrontFlashOnInVideo && (self.cameraMode == 1 || self.cameraMode == 2))))
 #define flashIsTurnedOn ((isiOS71 ? self.lastSelectedPhotoFlashMode == 1 : self.photoFlashMode == 1) || self.videoFlashMode == 1)
 
+static BOOL override = NO;
+
 %hook PLCameraView
 
 - (void)_shutterButtonClicked
@@ -19,9 +21,9 @@
 {
 	if (FrontFlashOnRecursively) {
 		onFlash = YES;
-		MSHookIvar<NSInteger>([%c(PLCameraController) sharedInstance], "_cameraDevice") = 0;
+		MSHookIvar<int>([%c(PLCameraController) sharedInstance], "_cameraDevice") = 0;
 		BOOL orig = %orig;
-		MSHookIvar<NSInteger>([%c(PLCameraController) sharedInstance], "_cameraDevice") = 1;
+		MSHookIvar<int>([%c(PLCameraController) sharedInstance], "_cameraDevice") = 1;
 		onFlash = NO;
 		return orig;
 	}
@@ -39,9 +41,16 @@
 
 - (void)_createDefaultControlsIfNecessary
 {
-	onFlash = YES;
+	onFlash = FrontFlashOnRecursively;
 	%orig;
 	onFlash = NO;
+}
+
+- (void)_updateFlashModeIfNecessary
+{
+	override = FrontFlashOnRecursively;
+	%orig;
+	override = NO;
 }
 
 - (BOOL)_shouldHideFlashButtonForMode:(int)mode
@@ -49,9 +58,9 @@
 	BOOL shouldHook = ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && (mode == 0 || mode == 4)) || (FrontFlashOnInVideo && (mode == 1 || mode == 2))));
 	if (shouldHook) {
 		onFlash = YES;
-		MSHookIvar<NSInteger>([%c(PLCameraController) sharedInstance], "_cameraDevice") = 0;
+		MSHookIvar<int>([%c(PLCameraController) sharedInstance], "_cameraDevice") = 0;
 		BOOL orig = %orig(0);
-		MSHookIvar<NSInteger>([%c(PLCameraController) sharedInstance], "_cameraDevice") = 1;
+		MSHookIvar<int>([%c(PLCameraController) sharedInstance], "_cameraDevice") = 1;
 		onFlash = NO;
 		return orig;
 	}
@@ -101,6 +110,11 @@
 {
 	reallyHasFlash = %orig;
 	return onFlash ? YES : reallyHasFlash;
+}
+
+- (int)cameraDevice
+{
+	return override ? 0 : %orig;
 }
 
 %end
