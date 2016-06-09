@@ -1,4 +1,4 @@
-#import "../FrontFlash.h"
+#define TWEAK
 #import "../Tweak.h"
 #import <substrate.h>
 
@@ -134,7 +134,7 @@ static void handleFlashButton(PLCameraView *cameraView)
 
 %end
 
-%group SC2iOS45
+%group SC2iOS5
 
 %hook PLCameraView
 
@@ -153,14 +153,14 @@ static void handleFlashButton(PLCameraView *cameraView)
 
 %ctor
 {
-	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
-	FFLoader();
+	preferences = [[HBPreferences alloc] initWithIdentifier:tweakIdentifier];
+	registerPref(preferences);
 	if (FrontFlashOn) {
 		openCamera6();
 		%init;
 		if (isiOS45) {
 			if (dlopen("/Library/MobileSubstrate/DynamicLibraries/StillCapture2.dylib", RTLD_LAZY) != NULL) {
-				%init(SC2iOS45);
+				%init(SC2iOS5);
 			}
 		}
 	}

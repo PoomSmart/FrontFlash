@@ -1,5 +1,5 @@
-#import "../FrontFlash.h"
 #import <substrate.h>
+#import "../../PS.h"
 
 BOOL override = NO;
 

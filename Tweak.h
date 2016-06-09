@@ -1,40 +1,39 @@
-#import <Foundation/Foundation.h>
+#import <HBPreferences.h>
+#import "../PS.h"
 
-static BOOL FrontFlashOnInPhoto;
-static BOOL FrontFlashOnInVideo;
+NSString *tweakIdentifier = @"com.PS.FrontFlash";
+
+NSString *FrontFlashOnInPhotoKey = @"FrontFlashOnInPhoto";
+NSString *FrontFlashOnInVideoKey = @"FrontFlashOnInVideo";
+NSString *HueKey = @"Hue";
+NSString *SatKey = @"Sat";
+NSString *BriKey = @"Bri";
+NSString *AlphaKey = @"Alpha";
+NSString *colorProfileKey = @"colorProfile";
+
+HBPreferences *preferences;
+
+#ifdef TWEAK
+
+#define kDelayDuration 0.35
+#define kDimDuration 1
+
+BOOL FrontFlashOnInPhoto;
+BOOL FrontFlashOnInVideo;
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
-static BOOL onFlash;
-static BOOL reallyHasFlash;
+BOOL onFlash;
+BOOL reallyHasFlash;
 
 CGFloat alpha;
 CGFloat hue;
 CGFloat sat;
 CGFloat bri;
 
-static int colorProfile;
-
-static void FFLoader()
-{
-	NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:PREF_PATH];
-	id val = dict[@"FrontFlashOnInPhoto"];
-	FrontFlashOnInPhoto = val ? [val boolValue] : YES;
-	val = dict[@"FrontFlashOnInVideo"];
-	FrontFlashOnInVideo = val ? [val boolValue] : YES;
-	val = dict[@"Hue"];
-	hue = val ? [val floatValue] : 1;
-	val = dict[@"Sat"];
-	sat = val ? [val floatValue] : 1;
-	val = dict[@"Bri"];
-	bri = val ? [val floatValue] : 1;
-	val = dict[@"Alpha"];
-	alpha = val ? [val floatValue] : 1;
-	val = dict[@"colorProfile"];
-	colorProfile = val ? [val intValue] : 1;
-}
+NSInteger colorProfile;
 
 UIColor *frontFlashColor()
 {
-	UIColor *flashColor = [UIColor whiteColor];
+	UIColor *flashColor = UIColor.whiteColor;
 	switch (colorProfile) {
 		case 2:
 			flashColor = [UIColor colorWithRed:1.0f green:0.99f blue:0.47f alpha:1.0f];
@@ -49,7 +48,7 @@ UIColor *frontFlashColor()
 	return flashColor;
 }
 
-static void flashScreen(UIView *keyWindow, void (^completionBlock)(void))
+void flashScreen(UIView *keyWindow, void (^completionBlock)(void))
 {
 	float previousBacklightLevel = [UIScreen mainScreen].brightness;
 	UIScreen.mainScreen.brightness = 1;
@@ -81,9 +80,26 @@ static void flashScreen(UIView *keyWindow, void (^completionBlock)(void))
 	}];
 }
 
-#define VOID(name) name(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
-static void VOID(PreferencesChangedCallback)
+#endif
+
+void registerPref(HBPreferences *preferences)
 {
-	system("killall Camera");
-	FFLoader();
+	[preferences registerDefaults:@{
+		FrontFlashOnInPhotoKey : @YES,
+		FrontFlashOnInVideoKey : @YES,
+		HueKey : @1.0,
+		SatKey : @1.0,
+		BriKey : @1.0,
+		AlphaKey : @1.0,
+		colorProfileKey : @1
+	}];
+	#ifdef TWEAK
+	[preferences registerBool:&FrontFlashOnInPhoto default:YES forKey:FrontFlashOnInPhotoKey];
+	[preferences registerBool:&FrontFlashOnInVideo default:YES forKey:FrontFlashOnInVideoKey];
+	[preferences registerFloat:&hue default:1.0 forKey:HueKey];
+	[preferences registerFloat:&sat default:1.0 forKey:SatKey];
+	[preferences registerFloat:&bri default:1.0 forKey:BriKey];
+	[preferences registerFloat:&alpha default:1.0 forKey:AlphaKey];
+	[preferences registerInteger:&colorProfile default:1 forKey:colorProfileKey];
+	#endif
 }

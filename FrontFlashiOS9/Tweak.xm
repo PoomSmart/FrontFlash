@@ -1,4 +1,4 @@
-#import "../FrontFlash.h"
+#define TWEAK
 #import "../Tweak.h"
 #import "../ZKSwizzle.h"
 
@@ -113,8 +113,8 @@ ZKSwizzleInterface($_Lamo_CAMViewfinderViewController, CAMViewfinderViewControll
 
 %ctor
 {
-	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
-	FFLoader();
+	preferences = [[HBPreferences alloc] initWithIdentifier:tweakIdentifier];
+	registerPref(preferences);
 	if (FrontFlashOn) {
 		openCamera9();
 		%init;

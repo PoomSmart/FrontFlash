@@ -1,12 +1,11 @@
 GO_EASY_ON_ME = 1
-TARGET = iphone:latest:6.0
 DEBUG = 0
-PACKAGE_VERSION = 1.6-9
+PACKAGE_VERSION = 1.7-1
 
 include $(THEOS)/makefiles/common.mk
 
 AGGREGATE_NAME = FrontFlash
-SUBPROJECTS = FrontFlashiOS456 FrontFlashiOS7 FrontFlashiPadiOS7 FrontFlashiOS8 FrontFlashiPadiOS8 FrontFlashiOS9 FrontFlashiPadiOS9
+SUBPROJECTS = FrontFlashiOS56 FrontFlashiOS7 FrontFlashiPadiOS7 FrontFlashiOS8 FrontFlashiPadiOS8 FrontFlashiOS9 FrontFlashiPadiOS9 Workaround_Cephei_iOS56
 
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
@@ -20,6 +19,7 @@ FrontFlashSettings_FILES = FrontFlashPreferenceController.m NKOColorPickerView.m
 FrontFlashSettings_INSTALL_PATH = /Library/PreferenceBundles
 FrontFlashSettings_PRIVATE_FRAMEWORKS = Preferences
 FrontFlashSettings_FRAMEWORKS = CoreGraphics Social UIKit
+FrontFlashSettings_LIBRARIES = cephei cepheiprefs
 
 include $(THEOS_MAKE_PATH)/bundle.mk
 

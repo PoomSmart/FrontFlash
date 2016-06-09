@@ -3,7 +3,7 @@ FrontFlash
 
 Front-facing camera flash, even in iPad.
 
-Compatible with iOS 4+
+As of version 1.7-1, FrontFlash no longer supports iOS 4
 
 MIT License.
 

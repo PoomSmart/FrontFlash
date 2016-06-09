@@ -1,8 +1,8 @@
-#import "../FrontFlash.h"
 #import <substrate.h>
+#import "../../PS.h"
 
-static BOOL hook;
-static BOOL hook2;
+BOOL hook;
+BOOL hook2;
 
 %hook CAMPadApplicationSpec
 

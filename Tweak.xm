@@ -10,5 +10,5 @@
 	else if (isiOS7)
 		dlopen("/Library/Application Support/FrontFlash/FrontFlashiOS7.dylib", RTLD_LAZY);
 	else
-		dlopen("/Library/Application Support/FrontFlash/FrontFlashiOS456.dylib", RTLD_LAZY);
+		dlopen("/Library/Application Support/FrontFlash/FrontFlashiOS56.dylib", RTLD_LAZY);
 }

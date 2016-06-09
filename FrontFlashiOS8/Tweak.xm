@@ -1,4 +1,4 @@
-#import "../FrontFlash.h"
+#define TWEAK
 #import "../Tweak.h"
 
 #define isVideoMode (self.cameraMode == 1 || self.cameraMode == 2 || self.cameraMode == 6)
@@ -93,8 +93,8 @@ static BOOL override = NO;
 
 %ctor
 {
-	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
-	FFLoader();
+	preferences = [[HBPreferences alloc] initWithIdentifier:tweakIdentifier];
+	registerPref(preferences);
 	if (FrontFlashOn) {
 		openCamera8();
 		%init;

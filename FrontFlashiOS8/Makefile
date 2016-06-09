@@ -8,7 +8,7 @@ LIBRARY_NAME = FrontFlashiOS8
 FrontFlashiOS8_FILES = Tweak.xm
 FrontFlashiOS8_FRAMEWORKS = UIKit
 FrontFlashiOS8_PRIVATE_FRAMEWORKS = GraphicsServices
-FrontFlashiOS8_LIBRARIES = substrate
+FrontFlashiOS8_LIBRARIES = cephei substrate
 FrontFlashiOS8_INSTALL_PATH = /Library/Application Support/FrontFlash
 
 include $(THEOS_MAKE_PATH)/library.mk

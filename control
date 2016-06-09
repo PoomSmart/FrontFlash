@@ -1,7 +1,7 @@
 Package: org.thebigboss.frontflash
 Name: FrontFlash
-Depends: mobilesubstrate, preferenceloader, gsc.front-facing-camera, firmware (>= 4.0)
-Version: 1.6
+Depends: mobilesubstrate, preferenceloader, gsc.front-facing-camera, firmware (>= 5.0), ws.hbang.common (>= 1.2)
+Version: 1.7
 Architecture: iphoneos-arm
 Description: Front-facing camera flash, even in iPad.
 Author: PoomSmart

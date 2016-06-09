@@ -17,15 +17,6 @@
     <array>
       <dict>
         <key>cell</key>
-        <string>PSGroupCell</string>
-        <key>label</key>
-        <string>FrontFlash</string>
-        <key>footerText</key>
-        <string>FrontFlash will flash your screen with color of your choice when you take photos using front-facing camera and having flash mode on. Screen brightness will be set to maximum to give you the best illumination in dark environment.
-The brightness will be set to default value automatically after taking photos.</string>
-      </dict>
-      <dict>
-        <key>cell</key>
         <string>PSSwitchCell</string>
         <key>default</key>
         <true/>
@@ -36,7 +27,7 @@ The brightness will be set to default value automatically after taking photos.</
         <key>label</key>
         <string>Enable in Photo Mode</string>
         <key>PostNotification</key>
-        <string>com.PS.FrontFlash.prefs</string>
+        <string>com.PS.FrontFlash/ReloadPrefs</string>
       </dict>
       <dict>
         <key>cell</key>
@@ -50,7 +41,13 @@ The brightness will be set to default value automatically after taking photos.</
         <key>label</key>
         <string>Enable in Video Mode</string>
         <key>PostNotification</key>
-        <string>com.PS.FrontFlash.prefs</string>
+        <string>com.PS.FrontFlash/ReloadPrefs</string>
+      </dict>
+		<dict>
+        <key>cell</key>
+        <string>PSGroupCell</string>
+        <key>label</key>
+        <string>Color Profile</string>
       </dict>
       <dict>
 			<key>cell</key>
@@ -64,9 +61,9 @@ The brightness will be set to default value automatically after taking photos.</
 			<key>footerText</key>
 			<string></string>
 			<key>label</key>
-			<string>Color Profile</string>
+			<string>Select</string>
 			<key>PostNotification</key>
-        	<string>com.PS.FrontFlash.prefs</string>
+        	<string>com.PS.FrontFlash/ReloadPrefs</string>
 			<key>validTitles</key>
 			<array>
 				<string>White</string>
@@ -82,17 +79,13 @@ The brightness will be set to default value automatically after taking photos.</
 				<integer>4</integer>
 			</array>
 		</dict>
-		<dict>
-        <key>cell</key>
-        <string>PSGroupCell</string>
-        <key>label</key>
-        <string>Color Profile (Custom)</string>
-      </dict>
       <dict>
             <key>cell</key>
             <string>PSButtonCell</string>
+            <key>cellClass</key>
+      		<string>FrontFlashColorCell</string>
             <key>label</key>
-            <string>Select Color</string>
+            <string>Custom Color</string>
            <key>action</key>
            <string>showColorPicker:</string>
            <key>alignment</key>
@@ -100,7 +93,7 @@ The brightness will be set to default value automatically after taking photos.</
         </dict>
         <dict>
 			<key>PostNotification</key>
-			<string>com.PS.FrontFlash.prefs</string>
+			<string>com.PS.FrontFlash/ReloadPrefs</string>
 			<key>cell</key>
 			<string>PSSliderCell</string>
 			<key>default</key>
@@ -117,34 +110,51 @@ The brightness will be set to default value automatically after taking photos.</
 			<false/>
 		</dict>
 		<dict>
-      		<key>cell</key>
-      		<string>PSGroupCell</string>
-      </dict>
-      <dict>
-      		<key>cell</key>
-      		<string>PSButtonCell</string>
-      		<key>action</key>
-      		<string>donate:</string>
-      		<key>label</key>
-      		<string>♥ Donate</string>
-      </dict>
-      <dict>
-      		<key>cell</key>
-      		<string>PSButtonCell</string>
-      		<key>action</key>
-      		<string>twitter:</string>
-      		<key>label</key>
-      		<string>🔗 Developer's Twitter</string>
-      </dict>
-      <dict>
         <key>cell</key>
         <string>PSGroupCell</string>
-        <key>footerAlignment</key>
-        <integer>1</integer>
+        <key>label</key>
+        <string>How it works?</string>
         <key>footerText</key>
-        <string>© 2013 - 2016 Thatchapon Unprasert
+        <string>FrontFlash will flash your screen with color of your choice when you take photos using front-facing camera and having flash mode on. Screen brightness will be set to maximum to give you the best illumination in dark environment.
+The brightness will be set to default value automatically after taking photos.</string>
+		<key>footerAlignment</key>
+		<integer>1</integer>
+      </dict>
+		<dict>
+      		<key>cell</key>
+      		<string>PSGroupCell</string>
+      		<key>label</key>
+      		<string>Developer</string>
+      		<key>footerAlignment</key>
+		<integer>1</integer>
+		<key>footerText</key>
+		<string>© 2013 - 2016 Thatchapon Unprasert
 (@PoomSmart)</string>
       </dict>
+      <dict>
+    	<key>big</key>
+    	<true/>
+    	<key>cellClass</key>
+		<string>HBTwitterCell</string>
+		<key>height</key>
+		<integer>60</integer>
+		<key>label</key>
+		<string>PoomSmart</string>
+		<key>user</key>
+		<string>PoomSmart</string>
+	</dict>
+      <dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>cellClass</key>
+			<string>HBLinkTableCell</string>
+			<key>label</key>
+			<string>Donate ❤️</string>
+			<key>alignment</key>
+			<integer>1</integer>
+			<key>url</key>
+			<string>http://poomsmartios.blogspot.com/2015/08/donation.html</string>
+		</dict>
     </array>
   </dict>
 </plist>

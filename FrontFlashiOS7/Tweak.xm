@@ -1,4 +1,4 @@
-#import "../FrontFlash.h"
+#define TWEAK
 #import "../Tweak.h"
 
 #define FrontFlashOnRecursively ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && (self.cameraMode == 0 || self.cameraMode == 4)) || (FrontFlashOnInVideo && (self.cameraMode == 1 || self.cameraMode == 2))))
@@ -121,8 +121,8 @@ static BOOL override = NO;
 
 %ctor
 {
-	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, PreferencesChangedNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
-	FFLoader();
+	preferences = [[HBPreferences alloc] initWithIdentifier:tweakIdentifier];
+	registerPref(preferences);
 	if (FrontFlashOn) {
 		openCamera7();
 		%init;
