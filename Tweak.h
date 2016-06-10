@@ -1,5 +1,5 @@
-#import <HBPreferences.h>
 #import "../PS.h"
+#import "../PSPrefs.x"
 
 NSString *tweakIdentifier = @"com.PS.FrontFlash";
 
@@ -10,8 +10,6 @@ NSString *SatKey = @"Sat";
 NSString *BriKey = @"Bri";
 NSString *AlphaKey = @"Alpha";
 NSString *colorProfileKey = @"colorProfile";
-
-HBPreferences *preferences;
 
 #ifdef TWEAK
 
@@ -29,7 +27,7 @@ CGFloat hue;
 CGFloat sat;
 CGFloat bri;
 
-NSInteger colorProfile;
+int colorProfile;
 
 UIColor *frontFlashColor()
 {
@@ -80,26 +78,16 @@ void flashScreen(UIView *keyWindow, void (^completionBlock)(void))
 	}];
 }
 
-#endif
-
-void registerPref(HBPreferences *preferences)
+HaveCallback()
 {
-	[preferences registerDefaults:@{
-		FrontFlashOnInPhotoKey : @YES,
-		FrontFlashOnInVideoKey : @YES,
-		HueKey : @1.0,
-		SatKey : @1.0,
-		BriKey : @1.0,
-		AlphaKey : @1.0,
-		colorProfileKey : @1
-	}];
-	#ifdef TWEAK
-	[preferences registerBool:&FrontFlashOnInPhoto default:YES forKey:FrontFlashOnInPhotoKey];
-	[preferences registerBool:&FrontFlashOnInVideo default:YES forKey:FrontFlashOnInVideoKey];
-	[preferences registerFloat:&hue default:1.0 forKey:HueKey];
-	[preferences registerFloat:&sat default:1.0 forKey:SatKey];
-	[preferences registerFloat:&bri default:1.0 forKey:BriKey];
-	[preferences registerFloat:&alpha default:1.0 forKey:AlphaKey];
-	[preferences registerInteger:&colorProfile default:1 forKey:colorProfileKey];
-	#endif
+	GetPrefs()
+	GetBool2(FrontFlashOnInPhoto, YES)
+	GetBool2(FrontFlashOnInVideo, YES)
+	GetFloat(hue, HueKey, 1.0)
+	GetFloat(sat, SatKey, 1.0)
+	GetFloat(bri, BriKey, 1.0)
+	GetFloat(alpha, AlphaKey, 1.0)
+	GetInt2(colorProfile, 1)
 }
+
+#endif

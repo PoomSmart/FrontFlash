@@ -6,8 +6,10 @@
 #import <Social/Social.h>
 #import "NKOColorPickerView.h"
 #import "Tweak.h"
-#import <HBPreferences.h>
 #import <dlfcn.h>
+#import "../PSPrefs.x"
+
+DeclarePrefsTools()
 
 @interface FrontFlashPreferenceController : HBListController
 @end
@@ -25,9 +27,9 @@ NSString *IdentifierKey = @"FrontFlashColorCellIdentifier";
 UIColor *savedCustomColor()
 {
 	CGFloat hue, sat, bri;
-	hue = [preferences floatForKey:HueKey];
-	sat = [preferences floatForKey:SatKey];
-	bri = [preferences floatForKey:BriKey];
+	hue = floatForKey(HueKey, 1.0);
+	sat = floatForKey(SatKey, 1.0);
+	bri = floatForKey(BriKey, 1.0);
 	UIColor *color = [UIColor colorWithHue:hue saturation:sat brightness:bri alpha:1];
 	return color;
 }
@@ -100,10 +102,10 @@ UIColor *savedCustomColor()
 	CGFloat hue, sat, bri;
     BOOL getColor = [self.color getHue:&hue saturation:&sat brightness:&bri alpha:nil];
     if (getColor) {
-    	[preferences setFloat:hue forKey:HueKey];
-		[preferences setFloat:sat forKey:SatKey];
-		[preferences setFloat:bri forKey:BriKey];
-		[preferences synchronize];
+    	setFloatForKey(hue, HueKey);
+    	setFloatForKey(sat, SatKey);
+    	setFloatForKey(bri, BriKey);
+    	DoPostNotification();
 		[NSNotificationCenter.defaultCenter postNotificationName:updateCellColorNotification object:nil userInfo:nil];
 	}
 	[self.parentViewController dismissViewControllerAnimated:YES completion:nil];
@@ -117,6 +119,8 @@ UIColor *savedCustomColor()
 {
 	return @"FrontFlash";
 }
+
+HavePrefs()
 
 - (void)loadView
 {
@@ -161,8 +165,6 @@ UIColor *savedCustomColor()
 		[heart sizeToFit];
 		[heart addTarget:self action:@selector(love) forControlEvents:UIControlEventTouchUpInside];
 		self.navigationItem.rightBarButtonItem = [[[UIBarButtonItem alloc] initWithCustomView:heart] autorelease];
-		preferences = [[HBPreferences alloc] initWithIdentifier:tweakIdentifier];
-		registerPref(preferences);
 	}
 	return self;
 }

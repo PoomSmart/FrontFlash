@@ -113,8 +113,12 @@ ZKSwizzleInterface($_Lamo_CAMViewfinderViewController, CAMViewfinderViewControll
 
 %ctor
 {
-	preferences = [[HBPreferences alloc] initWithIdentifier:tweakIdentifier];
-	registerPref(preferences);
+	NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
+	BOOL isSpringBoard = [identifier isEqualToString:@"com.apple.springboard"];
+	if (isSpringBoard)
+		return;
+	HaveObserver()
+	callback();
 	if (FrontFlashOn) {
 		openCamera9();
 		%init;

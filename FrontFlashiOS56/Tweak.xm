@@ -153,8 +153,8 @@ static void handleFlashButton(PLCameraView *cameraView)
 
 %ctor
 {
-	preferences = [[HBPreferences alloc] initWithIdentifier:tweakIdentifier];
-	registerPref(preferences);
+	HaveObserver()
+	callback();
 	if (FrontFlashOn) {
 		openCamera6();
 		%init;

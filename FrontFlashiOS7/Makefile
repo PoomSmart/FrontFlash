@@ -8,7 +8,7 @@ LIBRARY_NAME = FrontFlashiOS7
 FrontFlashiOS7_FILES = Tweak.xm
 FrontFlashiOS7_FRAMEWORKS = UIKit
 FrontFlashiOS7_PRIVATE_FRAMEWORKS = GraphicsServices
-FrontFlashiOS7_LIBRARIES = cephei substrate
+FrontFlashiOS7_LIBRARIES = substrate
 FrontFlashiOS7_INSTALL_PATH = /Library/Application Support/FrontFlash
 
 include $(THEOS_MAKE_PATH)/library.mk

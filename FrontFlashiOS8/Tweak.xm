@@ -6,7 +6,7 @@
 #define FrontFlashOnRecursively ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && isPhotoMode) || (FrontFlashOnInVideo && isVideoMode)))
 #define flashIsTurnedOn ((isPhotoMode && self.lastSelectedPhotoFlashMode == 1) || (isVideoMode && self.videoFlashMode == 1))
 
-static BOOL override = NO;
+BOOL override = NO;
 
 %hook CAMCameraView
 
@@ -93,8 +93,12 @@ static BOOL override = NO;
 
 %ctor
 {
-	preferences = [[HBPreferences alloc] initWithIdentifier:tweakIdentifier];
-	registerPref(preferences);
+	NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
+	BOOL isSpringBoard = [identifier isEqualToString:@"com.apple.springboard"];
+	if (isSpringBoard)
+		return;
+	HaveObserver()
+	callback();
 	if (FrontFlashOn) {
 		openCamera8();
 		%init;

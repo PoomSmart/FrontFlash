@@ -121,8 +121,12 @@ static BOOL override = NO;
 
 %ctor
 {
-	preferences = [[HBPreferences alloc] initWithIdentifier:tweakIdentifier];
-	registerPref(preferences);
+	NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
+	BOOL isSpringBoard = [identifier isEqualToString:@"com.apple.springboard"];
+	if (isSpringBoard)
+		return;
+	HaveObserver()
+	callback();
 	if (FrontFlashOn) {
 		openCamera7();
 		%init;
