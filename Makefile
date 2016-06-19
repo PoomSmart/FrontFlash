@@ -5,7 +5,9 @@ PACKAGE_VERSION = 1.7-2
 include $(THEOS)/makefiles/common.mk
 
 AGGREGATE_NAME = FrontFlash
-SUBPROJECTS = FrontFlashiOS56 FrontFlashiOS7 FrontFlashiPadiOS7 FrontFlashiOS8 FrontFlashiPadiOS8 FrontFlashiOS9 FrontFlashiPadiOS9 Workaround_Cephei_iOS56
+SUBPROJECTS = FrontFlashiOS56 FrontFlashiOS7 FrontFlashiOS8 FrontFlashiOS9 FrontFlashiOS10
+SUBPROJECTS += FrontFlashiPadiOS7 FrontFlashiPadiOS8 FrontFlashiPadiOS9
+SUBPROJECTS += Workaround_Cephei_iOS56
 
 include $(THEOS_MAKE_PATH)/aggregate.mk
 

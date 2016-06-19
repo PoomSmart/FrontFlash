@@ -9,6 +9,11 @@
 #import "ZKSwizzle.h"
 static NSMutableDictionary *classTable;
 
+@interface NSObject (ZKSwizzle)
++ (void)_ZK_unconditionallySwizzle;
++ (BOOL)_ZK_ignoreTypes;
+@end
+
 void *ZKIvarPointer(id self, const char *name) {
     Ivar ivar = class_getInstanceVariable(object_getClass(self), name);
     return ivar == NULL ? NULL : (__bridge void *)self + ivar_getOffset(ivar);
@@ -23,6 +28,7 @@ static Class classFromInfo(const char *info) {
     for (NSUInteger i = 0; i < strlen(info); i++) {
         if (info[i] == '[') {
             bracket_index = i;
+            break;
         }
     }
     bracket_index++;
@@ -72,6 +78,11 @@ ZKIMP ZKOriginalImplementation(id self, SEL sel, const char *info) {
     Method method =  class_getInstanceMethod(dest, destSel);
     
     if (method == NULL) {
+        if (![NSStringFromClass(cls) isEqualToString:NSStringFromClass([self class])]) {
+            // There is no implementation at this class level. Call the super implementation
+            return ZKSuperImplementation(self, sel, info);
+        }
+        
         [NSException raise:@"Failed to retrieve method" format:@"Got null for the source class %@ with selector %@ (%@)", NSStringFromClass(cls), NSStringFromSelector(sel), NSStringFromSelector(destSel)];
         return NULL;
     }
@@ -150,14 +161,13 @@ BOOL _ZKSwizzle(Class src, Class dest) {
         return NO;
     }
     
-    NSLog(@"ZKSwizzle: Swizzling %@ with %@", NSStringFromClass(src), NSStringFromClass(dest));
     if (!classTable) {
         classTable = [[NSMutableDictionary alloc] init];
     }
     
     if ([classTable objectForKey:NSStringFromClass(src)]) {
         [NSException raise:@"Invalid Argument"
-                    format:@"This source class was already swizzled with another"];
+                    format:@"This source class (%@) was already swizzled with another, (%@)", NSStringFromClass(src), classTable[NSStringFromClass(src)]];
         return NO;
     }
     
@@ -173,14 +183,41 @@ BOOL _ZKSwizzleClass(Class cls) {
     return _ZKSwizzle(cls, [cls superclass]);
 }
 
+static BOOL classIgnoresTypes(Class cls) {
+    if (!class_isMetaClass(cls)) {
+        cls = object_getClass(cls);
+    }
+    
+    if (class_respondsToSelector(cls, @selector(_ZK_ignoreTypes))) {
+        Class cls2 = class_createInstance(cls, 0);
+        return [cls2 _ZK_ignoreTypes];
+    }
+    
+    return NO;
+}
+
 static BOOL enumerateMethods(Class destination, Class source) {
+#if OBJC_API_VERSION < 2
+    [NSException raise:@"Unsupported feature" format:@"ZKSwizzle is only available in objc 2.0"];
+    return NO;
+    
+#else
+    
     unsigned int methodCount;
     Method *methodList = class_copyMethodList(source, &methodCount);
     BOOL success = YES;
+    BOOL ignoreTypes = classIgnoresTypes(source);
+    
     for (int i = 0; i < methodCount; i++) {
         Method method = methodList[i];
         SEL selector  = method_getName(method);
         NSString *methodName = NSStringFromSelector(selector);
+        
+        // Don't do anything with the unconditional swizzle
+        if (sel_isEqual(selector, @selector(_ZK_unconditionallySwizzle)) ||
+            sel_isEqual(selector, @selector(_ZK_ignoreTypes))) {
+            continue;
+        }
         
         // We only swizzle methods that are implemented
         if (class_respondsToSelector(destination, selector)) {
@@ -188,24 +225,36 @@ static BOOL enumerateMethods(Class destination, Class source) {
             
             const char *originalType = method_getTypeEncoding(originalMethod);
             const char *newType = method_getTypeEncoding(method);
-            if (strcmp(originalType, newType) != 0) {
+            if (strcmp(originalType, newType) != 0 && !ignoreTypes) {
                 NSLog(@"ZKSwizzle: incompatible type encoding for %@. (expected %s, got %s)", methodName, originalType, newType);
                 // Incompatible type encoding
                 success = NO;
                 continue;
             }
             
-            // We are re-adding the destination selector because it could be on a superclass and not on the class itself. This method could fail
-            class_addMethod(destination, selector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));
+            Method superImp = class_getInstanceMethod(class_getSuperclass(destination), selector);
             
-            SEL destSel = destinationSelectorForSelector(selector, source);
-            if (!class_addMethod(destination, destSel, method_getImplementation(method), method_getTypeEncoding(originalMethod))) {
-                NSLog(@"ZKSwizzle: failed to add method %@ onto class %@ with selector %@", NSStringFromSelector(selector), NSStringFromClass(source), NSStringFromSelector(destSel));
-                success = NO;
-                continue;
+            if (originalMethod != superImp) {
+                // We are re-adding the destination selector because it could be on a superclass and not on the class itself. This method could fail
+                class_addMethod(destination, selector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));
+                
+                SEL destSel = destinationSelectorForSelector(selector, source);
+                if (!class_addMethod(destination, destSel, method_getImplementation(method), method_getTypeEncoding(originalMethod))) {
+                    NSLog(@"ZKSwizzle: failed to add method %@ onto class %@ with selector %@", NSStringFromSelector(selector), NSStringFromClass(source), NSStringFromSelector(destSel));
+                    success = NO;
+                    continue;
+                }
+                
+                method_exchangeImplementations(class_getInstanceMethod(destination, selector), class_getInstanceMethod(destination, destSel));
+            } else {
+                // If the method we are hooking is not implemented on the subclass at hook-time,
+                // we want orig calls from those hooks to go to the superclass. (ZKOriginalImplementation
+                //    redirects to ZKSuperImplementation when destinationSelectorForSelector() is not implemented
+                //    on the target class, that, combined with the fact that ZKOrig is called from a hook, means
+                //    calls should redirect to super)
+                success &= class_addMethod(destination, selector, method_getImplementation(method), method_getTypeEncoding(method));
             }
             
-            method_exchangeImplementations(class_getInstanceMethod(destination, selector), class_getInstanceMethod(destination, destSel));
         } else {
             // Add any extra methods to the class but don't swizzle them
             success &= class_addMethod(destination, selector, method_getImplementation(method), method_getTypeEncoding(method));
@@ -231,5 +280,47 @@ static BOOL enumerateMethods(Class destination, Class source) {
     
     free(propertyList);
     free(methodList);
+    return success;
+#endif
+}
+
+// Options were to use a group class and traverse its subclasses
+// or to create a groups dictionary
+// This works because +load on NSObject is called before attribute((constructor))
+static NSMutableDictionary *groups = nil;
+void _$ZKRegisterInterface(Class cls, const char *groupName) {
+    if (!groups)
+        groups = [[NSMutableDictionary dictionary] retain];
+    
+    NSString *groupString = @(groupName);
+    NSMutableArray *groupList = groups[groupString];
+    if (!groupList) {
+        groupList = [NSMutableArray array];
+        groups[groupString] = groupList;
+    }
+    
+    [groupList addObject:NSStringFromClass(cls)];
+}
+
+BOOL _ZKSwizzleGroup(const char *groupName) {
+    NSArray *groupList = groups[@(groupName)];
+    if (!groupList) {
+        [NSException raise:@"Invalid Argument" format:@"ZKSwizzle: There is no group by the name of %s", groupName];
+        return NO;
+    }
+    
+    BOOL success = YES;
+    for (NSString *className in groupList) {
+        Class cls = NSClassFromString(className);
+        if (cls == NULL)
+            continue;
+        
+        if (class_respondsToSelector(object_getClass(cls), @selector(_ZK_unconditionallySwizzle))) {
+            [cls _ZK_unconditionallySwizzle];
+        } else {
+            success = NO;
+        }
+    }
+    
     return success;
 }
