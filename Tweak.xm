@@ -3,7 +3,9 @@
 
 %ctor
 {
-	if (isiOS9Up)
+	if (isiOS10Up)
+		dlopen("/Library/Application Support/FrontFlash/FrontFlashiOS10.dylib", RTLD_LAZY);
+	else if (isiOS9)
 		dlopen("/Library/Application Support/FrontFlash/FrontFlashiOS9.dylib", RTLD_LAZY);
 	else if (isiOS8)
 		dlopen("/Library/Application Support/FrontFlash/FrontFlashiOS8.dylib", RTLD_LAZY);

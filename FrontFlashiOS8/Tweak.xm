@@ -32,14 +32,14 @@ BOOL override = NO;
 	override = NO;
 }
 
-- (BOOL)_shouldHideFlashButtonForMode:(int)mode
+- (BOOL)_shouldHideFlashButtonForMode:(NSInteger)mode
 {
 	BOOL shouldHook = ((self.cameraDevice == 1) && ((FrontFlashOnInPhoto && (mode == 0 || mode == 4)) || (FrontFlashOnInVideo && (mode == 1 || mode == 2 || mode == 6))));
 	if (shouldHook) {
 		onFlash = YES;
-		MSHookIvar<int>([%c(CAMCaptureController) sharedInstance], "_cameraDevice") = 0;
+		MSHookIvar<NSInteger>([%c(CAMCaptureController) sharedInstance], "_cameraDevice") = 0;
 		BOOL orig = %orig(0);
-		MSHookIvar<int>([%c(CAMCaptureController) sharedInstance], "_cameraDevice") = 1;
+		MSHookIvar<NSInteger>([%c(CAMCaptureController) sharedInstance], "_cameraDevice") = 1;
 		onFlash = NO;
 		return orig;
 	}
@@ -84,7 +84,7 @@ BOOL override = NO;
 	return onFlash ? YES : reallyHasFlash;
 }
 
-- (int)cameraDevice
+- (NSInteger)cameraDevice
 {
 	return override ? 0 : %orig;
 }

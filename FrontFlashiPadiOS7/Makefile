@@ -1,5 +1,5 @@
 GO_EASY_ON_ME = 1
-TARGET = iphone:latest:7.0
+TARGET = iphone:latest
 ARCHS = armv7 arm64
 
 include $(THEOS)/makefiles/common.mk

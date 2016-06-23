@@ -30,7 +30,7 @@ BOOL override = NO;
 
 %hook CAMLegacyStillImageCaptureRequest
 
-- (int)flashMode
+- (NSInteger)flashMode
 {
 	return override ? 0 : %orig;
 }
@@ -39,7 +39,7 @@ BOOL override = NO;
 
 %hook CAMMutableStillImageCaptureRequest
 
-- (int)flashMode
+- (NSInteger)flashMode
 {
 	return override ? 0 : %orig;
 }
@@ -49,17 +49,17 @@ BOOL override = NO;
 ZKSwizzleInterface($_Lamo_CAMViewfinderViewController, CAMViewfinderViewController, NSObject);
 
 @interface $_Lamo_CAMViewfinderViewController (Hey)
-@property int _desiredFlashMode;
-@property int _desiredTorchMode;
-@property int _flashMode;
-@property int _currentMode;
-@property int _currentDevice;
+@property NSInteger _desiredFlashMode;
+@property NSInteger _desiredTorchMode;
+@property NSInteger _flashMode;
+@property NSInteger _currentMode;
+@property NSInteger _currentDevice;
 - (CAMFlashButton *)_flashButton;
 @end
 
 @implementation $_Lamo_CAMViewfinderViewController
 
-- (BOOL)_shouldHideFlashButtonForMode:(int)mode device:(int)device
+- (BOOL)_shouldHideFlashButtonForMode:(NSInteger)mode device:(NSInteger)device
 {
 	if (isVideoMode(mode) && device == 1)
 		return NO;
@@ -104,7 +104,7 @@ ZKSwizzleInterface($_Lamo_CAMViewfinderViewController, CAMViewfinderViewControll
 		self._flashButton.allowsAutomaticFlash = NO;
 }
 
-- (void)_updateTopBarStyleForMode:(int)mode device:(int)device capturing:(BOOL)capturing animated:(BOOL)animated
+- (void)_updateTopBarStyleForMode:(NSInteger)mode device:(NSInteger)device capturing:(BOOL)capturing animated:(BOOL)animated
 {
 	ZKOrig(void, mode, device, NO, animated);
 }
@@ -122,7 +122,5 @@ ZKSwizzleInterface($_Lamo_CAMViewfinderViewController, CAMViewfinderViewControll
 	if (FrontFlashOn) {
 		openCamera9();
 		%init;
-		if (IPAD)
-			dlopen("/Library/Application Support/FrontFlash/FrontFlashiPadiOS9.dylib", RTLD_LAZY);
 	}
 }

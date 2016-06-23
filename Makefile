@@ -1,12 +1,13 @@
 GO_EASY_ON_ME = 1
 DEBUG = 0
-PACKAGE_VERSION = 1.7-2
+PACKAGE_VERSION = 1.7-3
+TARGET = iphone:latest
 
 include $(THEOS)/makefiles/common.mk
 
 AGGREGATE_NAME = FrontFlash
 SUBPROJECTS = FrontFlashiOS56 FrontFlashiOS7 FrontFlashiOS8 FrontFlashiOS9 FrontFlashiOS10
-SUBPROJECTS += FrontFlashiPadiOS7 FrontFlashiPadiOS8 FrontFlashiPadiOS9
+SUBPROJECTS += FrontFlashiPadiOS7 FrontFlashiPadiOS8
 SUBPROJECTS += Workaround_Cephei_iOS56
 
 include $(THEOS_MAKE_PATH)/aggregate.mk

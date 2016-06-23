@@ -27,7 +27,7 @@ CGFloat hue;
 CGFloat sat;
 CGFloat bri;
 
-int colorProfile;
+NSInteger colorProfile;
 
 UIColor *frontFlashColor()
 {

@@ -36,7 +36,7 @@ static void handleFlashButton(PLCameraView *cameraView)
 	override = NO;
 }
 
-- (void)_updateIsNonDefaultFlashMode:(int)mode
+- (void)_updateIsNonDefaultFlashMode:(NSInteger)mode
 {
 	override = FrontFlashOnRecursively;
 	%orig;
@@ -101,12 +101,12 @@ static void handleFlashButton(PLCameraView *cameraView)
 
 %hook PLCameraFlashButton
 
-- (void)setFlashMode:(int)mode notifyDelegate:(BOOL)delegate
+- (void)setFlashMode:(NSInteger)mode notifyDelegate:(BOOL)delegate
 {
 	%orig(([(PLCameraController *)[NSClassFromString(@"PLCameraController") sharedInstance] isCapturingVideo] && mode == -1 && !reallyHasFlash && self.flashMode == 1) ? 1 : mode, delegate);
 }
 
-- (void)_collapseAndSetMode:(int)mode animated:(BOOL)animated
+- (void)_collapseAndSetMode:(NSInteger)mode animated:(BOOL)animated
 {
 	%orig(mode == 0 && (((PLCameraController *)[NSClassFromString(@"PLCameraController") sharedInstance]).cameraDevice == 1) ? -1 : mode, animated);
 }
@@ -121,13 +121,13 @@ static void handleFlashButton(PLCameraView *cameraView)
 	return onFlash ? YES : reallyHasFlash;
 }
 
-- (void)_setFlashMode:(int)mode force:(BOOL)force
+- (void)_setFlashMode:(NSInteger)mode force:(BOOL)force
 {
 	%orig;
 	frontFlashActive = (mode == 1);
 }
 
-- (int)cameraDevice
+- (NSInteger)cameraDevice
 {
 	return override ? 0 : %orig;
 }
