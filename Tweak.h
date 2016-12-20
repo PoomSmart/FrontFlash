@@ -18,16 +18,20 @@ NSString *colorProfileKey = @"colorProfile";
 
 BOOL FrontFlashOnInPhoto;
 BOOL FrontFlashOnInVideo;
+#ifndef SUPPRESS_SETTINGS
 #define FrontFlashOn (FrontFlashOnInPhoto || FrontFlashOnInVideo)
+#else
+#define FrontFlashOn YES
+#endif
 BOOL onFlash;
 BOOL reallyHasFlash;
 
-CGFloat alpha;
-CGFloat hue;
-CGFloat sat;
-CGFloat bri;
+CGFloat alpha = 1.0;
+CGFloat hue = 1.0;
+CGFloat sat = 1.0;
+CGFloat bri = 1.0;
 
-NSInteger colorProfile;
+NSInteger colorProfile = 1;
 
 UIColor *frontFlashColor()
 {
@@ -78,6 +82,8 @@ void flashScreen(UIView *keyWindow, void (^completionBlock)(void))
 	}];
 }
 
+#ifndef SUPPRESS_SETTINGS
+
 HaveCallback()
 {
 	GetPrefs()
@@ -89,5 +95,7 @@ HaveCallback()
 	GetFloat(alpha, AlphaKey, 1.0)
 	GetInt2(colorProfile, 1)
 }
+
+#endif
 
 #endif

@@ -14,7 +14,7 @@ BOOL override = NO;
 
 - (BOOL)hasFlash
 {
-	return FrontFlashOn;
+	return YES;
 }
 
 %end
@@ -23,7 +23,7 @@ BOOL override = NO;
 
 - (BOOL)isFrontFlashSupported
 {
-	return FrontFlashOn;
+	return YES;
 }
 
 %end
