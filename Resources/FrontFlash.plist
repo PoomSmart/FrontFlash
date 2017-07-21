@@ -128,7 +128,7 @@ The brightness will be set to default value automatically after taking photos.</
       		<key>footerAlignment</key>
 		<integer>1</integer>
 		<key>footerText</key>
-		<string>© 2013 - 2016 Thatchapon Unprasert
+		<string>© 2013 - 2017 Thatchapon Unprasert
 (@PoomSmart)</string>
       </dict>
       <dict>
@@ -153,7 +153,7 @@ The brightness will be set to default value automatically after taking photos.</
 			<key>alignment</key>
 			<integer>1</integer>
 			<key>url</key>
-			<string>http://poomsmart.github.io/repo/</string>
+			<string>https://poomsmart.github.io/repo/</string>
 		</dict>
     </array>
   </dict>

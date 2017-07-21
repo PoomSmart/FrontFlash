@@ -26,22 +26,21 @@ BOOL FrontFlashOnInVideo;
 BOOL onFlash;
 BOOL reallyHasFlash;
 
-CGFloat alpha = 1.0;
-CGFloat hue = 1.0;
-CGFloat sat = 1.0;
-CGFloat bri = 1.0;
+CGFloat alpha;
+CGFloat hue;
+CGFloat sat;
+CGFloat bri;
 
-NSInteger colorProfile = 1;
+NSInteger colorProfile;
 
-UIColor *frontFlashColor()
-{
+UIColor *frontFlashColor() {
 	UIColor *flashColor = UIColor.whiteColor;
 	switch (colorProfile) {
 		case 2:
-			flashColor = [UIColor colorWithRed:1.0f green:0.99f blue:0.47f alpha:1.0f];
+			flashColor = [UIColor colorWithRed:1.0 green:0.99 blue:0.47 alpha:1.0];
 			break;
 		case 3:
-			flashColor = [UIColor colorWithRed:0.66f green:0.94f blue:1.0f alpha:1.0f];
+			flashColor = [UIColor colorWithRed:0.66 green:0.94 blue:1.0 alpha:1.0];
 			break;
 		case 4:
 			flashColor = [UIColor colorWithHue:hue saturation:sat brightness:bri alpha:alpha];
@@ -50,8 +49,7 @@ UIColor *frontFlashColor()
 	return flashColor;
 }
 
-void flashScreen(UIView *keyWindow, void (^completionBlock)(void))
-{
+void flashScreen(UIView *keyWindow, void (^completionBlock)(void)) {
 	float previousBacklightLevel = [UIScreen mainScreen].brightness;
 	UIScreen.mainScreen.brightness = 1;
 	UIView *flashView = [[UIView alloc] initWithFrame:keyWindow.frame];
@@ -84,15 +82,14 @@ void flashScreen(UIView *keyWindow, void (^completionBlock)(void))
 
 #ifndef SUPPRESS_SETTINGS
 
-HaveCallback()
-{
+HaveCallback() {
 	GetPrefs()
 	GetBool2(FrontFlashOnInPhoto, YES)
 	GetBool2(FrontFlashOnInVideo, YES)
-	GetFloat(hue, HueKey, 1.0)
-	GetFloat(sat, SatKey, 1.0)
-	GetFloat(bri, BriKey, 1.0)
-	GetFloat(alpha, AlphaKey, 1.0)
+	GetCGFloat(hue, HueKey, 1.0)
+	GetCGFloat(sat, SatKey, 1.0)
+	GetCGFloat(bri, BriKey, 1.0)
+	GetCGFloat(alpha, AlphaKey, 1.0)
 	GetInt2(colorProfile, 1)
 }
 
