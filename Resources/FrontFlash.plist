@@ -63,7 +63,7 @@
 			<key>label</key>
 			<string>Select</string>
 			<key>PostNotification</key>
-        	<string>com.PS.FrontFlash/ReloadPrefs</string>
+      <string>com.PS.FrontFlash/ReloadPrefs</string>
 			<key>validTitles</key>
 			<array>
 				<string>White</string>
@@ -115,7 +115,7 @@
         <key>label</key>
         <string>How it works?</string>
         <key>footerText</key>
-        <string>FrontFlash will flash your screen with color of your choice when you take photos using front-facing camera and having flash mode on. Screen brightness will be set to maximum to give you the best illumination in dark environment.
+        <string>FrontFlash flashes your screen with color of your choice when you take photos using front-facing camera, with flash mode turned on. Screen brightness is set to maximum to give you the best illumination in dark environment.
 The brightness will be set to default value automatically after taking photos.</string>
 		<key>footerAlignment</key>
 		<integer>1</integer>

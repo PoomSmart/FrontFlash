@@ -1,4 +1,4 @@
-TARGET = iphone:clang:9.0:7.0
+TARGET = iphone:clang:7.1:7.0
 
 include $(THEOS)/makefiles/common.mk
 
@@ -7,6 +7,6 @@ FrontFlashiOS7_FILES = Tweak.xm
 FrontFlashiOS7_FRAMEWORKS = UIKit
 FrontFlashiOS7_PRIVATE_FRAMEWORKS = GraphicsServices
 FrontFlashiOS7_EXTRA_FRAMEWORKS = CydiaSubstrate
-FrontFlashiOS7_INSTALL_PATH = /Library/Application Support/FrontFlash
+FrontFlashiOS7_INSTALL_PATH = /Library/MobileSubstrate/DynamicLibraries/FrontFlash
 
 include $(THEOS_MAKE_PATH)/library.mk

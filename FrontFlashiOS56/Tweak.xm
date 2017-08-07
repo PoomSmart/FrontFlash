@@ -142,9 +142,9 @@ static void handleFlashButton(PLCameraView *cameraView) {
 %end
 
 %ctor {
-    HaveObserver();
     callback();
     if (FrontFlashOn) {
+        HaveObserver();
         openCamera6();
         %init;
         if (isiOS45) {

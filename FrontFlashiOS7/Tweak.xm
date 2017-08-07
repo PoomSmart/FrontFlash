@@ -208,9 +208,9 @@ BOOL hook2;
 %ctor {
     if (IN_SPRINGBOARD)
         return;
-    HaveObserver();
     callback();
     if (FrontFlashOn) {
+        HaveObserver();
         openCamera7();
         %init;
         if (IS_IPAD) {

@@ -1,6 +1,5 @@
 #define TWEAK
 #import "../Tweak.h"
-#import <dlfcn.h>
 
 #define isVideoMode(mode) (mode == 1 || mode == 2 || mode == 6)
 #define isPhotoMode(mode) (mode == 0 || mode == 4)
@@ -13,7 +12,7 @@ BOOL override = NO;
 %hook AVCaptureFigVideoDevice
 
 - (BOOL)hasFlash {
-    return FrontFlashOn;
+    return self.position == AVCaptureDevicePositionFront ? YES : %orig;
 }
 
 %end
@@ -21,7 +20,7 @@ BOOL override = NO;
 %hook CAMCaptureCapabilities
 
 - (BOOL)isFrontFlashSupported {
-    return FrontFlashOn;
+    return YES;
 }
 
 %end
@@ -82,7 +81,7 @@ BOOL override = NO;
 }
 
 - (void)_updateTopBarStyleForGraphConfiguration:(CAMCaptureGraphConfiguration *)configuration capturing:(BOOL)capturing animated:(BOOL)animated {
-    %orig(configuration, NO, animated);
+    %orig(configuration, configuration.device == 1 ? NO : capturing, animated);
 }
 
 %end
@@ -90,9 +89,9 @@ BOOL override = NO;
 %ctor {
     if (IN_SPRINGBOARD)
         return;
-    HaveObserver();
     callback();
     if (FrontFlashOn) {
+        HaveObserver();
         openCamera10();
         %init;
     }

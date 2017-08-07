@@ -1,6 +1,5 @@
 #define UIFUNCTIONS_NOT_C
 #import <UIKit/UIKit.h>
-#import <UIKit/UIImage+Private.h>
 #import <UIKit/UIColor+Private.h>
 #import <Cephei/HBListController.h>
 #import <Cephei/HBAppearanceSettings.h>
@@ -19,6 +18,7 @@ DeclarePrefsTools()
 
 @interface FrontFlashColorPickerViewController : UIViewController <NKOColorPickerViewDelegate>
 @property (retain) UIColor *color;
++ (UIColor *)savedCustomColor;
 @end
 
 NSString *updateCellColorNotification = @"com.PS.FrontFlash.prefs.colorUpdate";
@@ -26,15 +26,6 @@ NSString *IdentifierKey = @"FrontFlashColorCellIdentifier";
 
 @interface FrontFlashColorCell : PSTableCell
 @end
-
-UIColor *savedCustomColor() {
-    CGFloat hue, sat, bri;
-    hue = cgfloatForKey(HueKey, 1.0);
-    sat = cgfloatForKey(SatKey, 1.0);
-    bri = cgfloatForKey(BriKey, 1.0);
-    UIColor *color = [UIColor colorWithHue:hue saturation:sat brightness:bri alpha:1];
-    return color;
-}
 
 @implementation FrontFlashColorCell
 
@@ -46,10 +37,14 @@ UIColor *savedCustomColor() {
     return self;
 }
 
+- (UIColor *)savedCustomColor {
+    return [FrontFlashColorPickerViewController savedCustomColor];
+}
+
 - (UIView *)colorCell {
-    UIView *circle = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 28, 28)];
-    circle.layer.cornerRadius = 14;
-    circle.backgroundColor = savedCustomColor();
+    UIView *circle = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, 28.0, 28.0)];
+    circle.layer.cornerRadius = 14.0;
+    circle.backgroundColor = [self savedCustomColor];
     return [circle autorelease];
 }
 
@@ -59,7 +54,7 @@ UIColor *savedCustomColor() {
 
 - (void)updateColorCell {
     self.accessoryView = [[self colorCell] retain];
-    self.titleLabel.textColor = savedCustomColor();
+    self.titleLabel.textColor = self.accessoryView.backgroundColor;
 }
 
 - (void)dealloc {
@@ -75,14 +70,14 @@ UIColor *savedCustomColor() {
     self.color = color;
 }
 
-- (UIColor *)savedCustomColor {
-    return savedCustomColor();
++ (UIColor *)savedCustomColor {
+    return [UIColor colorWithHue:cgfloatForKey(HueKey, 1.0) saturation:cgfloatForKey(SatKey, 1.0) brightness:cgfloatForKey(BriKey, 1.0) alpha:1.0];
 }
 
 - (id)init {
     if (self == [super init]) {
-        UIColor *color = [[self savedCustomColor] retain];
-        NKOColorPickerView *colorPickerView = [[[NKOColorPickerView alloc] initWithFrame:CGRectMake(0, 0, 300, 340) color:color delegate:self] autorelease];
+        UIColor *color = [[[self class] savedCustomColor] retain];
+        NKOColorPickerView *colorPickerView = [[[NKOColorPickerView alloc] initWithFrame:CGRectMake(0.0, 0.0, 300.0, 340.0) color:color delegate:self] autorelease];
         colorPickerView.backgroundColor = UIColor.blackColor;
         self.view = colorPickerView;
         self.navigationItem.title = @"Select Color";
@@ -93,8 +88,7 @@ UIColor *savedCustomColor() {
 
 - (void)dismissPicker {
     CGFloat hue, sat, bri;
-    BOOL getColor = [self.color getHue:&hue saturation:&sat brightness:&bri alpha:nil];
-    if (getColor) {
+    if ([self.color getHue:&hue saturation:&sat brightness:&bri alpha:nil]) {
         setFloatForKey(hue, HueKey);
         setFloatForKey(sat, SatKey);
         setFloatForKey(bri, BriKey);
@@ -125,14 +119,7 @@ HaveBanner2(@"FrontFlash", isiOS7Up ? UIColor.systemYellowColor : UIColor.yellow
             appearanceSettings.tableViewBackgroundColor = UIColor.whiteColor;
             appearanceSettings.invertedNavigationBar = YES;
             self.hb_appearanceSettings = appearanceSettings;
-            UIButton *heart = [[[UIButton alloc] initWithFrame:CGRectZero] autorelease];
-            UIImage *image = [UIImage imageNamed:@"Heart" inBundle:[NSBundle bundleWithPath:@"/Library/PreferenceBundles/FrontFlashSettings.bundle"]];
-            if (isiOS7Up)
-                image = [image _flatImageWithColor:UIColor.whiteColor];
-            [heart setImage:image forState:UIControlStateNormal];
-            [heart sizeToFit];
-            [heart addTarget:self action:@selector(love) forControlEvents:UIControlEventTouchUpInside];
-            self.navigationItem.rightBarButtonItem = [[[UIBarButtonItem alloc] initWithCustomView:heart] autorelease];
+            self.navigationItem.rightBarButtonItem = [[[UIBarButtonItem alloc] initWithTitle:@"💛" style:UIBarButtonItemStylePlain target:self action:@selector(love)] autorelease];
         }
     }
     return self;
@@ -140,9 +127,11 @@ HaveBanner2(@"FrontFlash", isiOS7Up ? UIColor.systemYellowColor : UIColor.yellow
 
 - (void)love {
     SLComposeViewController *twitter = [[SLComposeViewController composeViewControllerForServiceType:SLServiceTypeTwitter] retain];
-    twitter.initialText = @"#FrontFlash by @PoomSmart is really awesome!";
-    [self.navigationController presentViewController:twitter animated:YES completion:nil];
-    [twitter release];
+    if (twitter) {
+        twitter.initialText = @"#FrontFlash by @PoomSmart is really awesome!";
+        [self.navigationController presentViewController:twitter animated:YES completion:nil];
+        [twitter release];
+    }
 }
 
 - (void)showColorPicker:(id)param {

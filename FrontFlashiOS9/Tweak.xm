@@ -12,7 +12,7 @@ BOOL override = NO;
 %hook AVCaptureFigVideoDevice
 
 - (BOOL)hasFlash {
-    return YES;
+    return self.position == AVCaptureDevicePositionFront ? YES : %orig;
 }
 
 %end
@@ -87,7 +87,7 @@ BOOL override = NO;
 }
 
 - (void)_updateTopBarStyleForMode:(NSInteger)mode device:(NSInteger)device capturing:(BOOL)capturing animated:(BOOL)animated {
-    %orig(mode, device, NO, animated);
+    %orig(mode, device, device == 1 ? NO : capturing, animated);
 }
 
 %end
